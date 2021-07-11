@@ -14,7 +14,7 @@ function validate() {
 }
 
 async function checkAlamat(alamat) {
-  let sql = "select id from alamat where $1";
+  let sql = "select id from alamat where id = $1";
   let response = await db.query(sql, [alamat]);
   new Promise((resolve, reject) => {
     if (response.length == 0) {
@@ -26,7 +26,7 @@ async function checkAlamat(alamat) {
 }
 
 async function checkUsername(user) {
-  let sql = "select id from users where $1";
+  let sql = "select id from users where id = $1";
   let response = await db.query(sql, [user]);
   new Promise((resolve, reject) => {
     if (response.length == 0) {

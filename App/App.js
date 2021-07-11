@@ -1,18 +1,18 @@
 const express = require("express");
 const app = express();
-const cmpression = require("compression")
+const cmpression = require("compression");
 var path = require("path");
-app.use(cmpression())
+app.use(cmpression());
 const Middleware = require("../Middleware/Middleware");
 const Route = require("../Routes/Routes");
 const Cors = require("cors");
+const { encrypt, decrypt } = require("../Util/Encrypt");
 //CORS
 var whitelist = [
   "https://webdokter.herokuapp.com",
   "http://localhost:3000",
   "https://api-dokter.herokuapp.com",
 ];
-
 
 app.use(Cors());
 
@@ -58,7 +58,8 @@ app.use(express.static(path.join(__dirname, "public")));
 Route(app);
 
 app.get("/", (req, res) => {
-  res.send("Api Aplikasi Kopi");
+  let a = encrypt("Oke");
+  res.send(decrypt(a));
 });
 
 module.exports = app;

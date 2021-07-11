@@ -10,7 +10,7 @@ function validate() {
 }
 
 async function checkBarang(barang) {
-  let sql = "select id from barang where $1";
+  let sql = "select id from barang where id = $1";
   let response = await db.query(sql, [barang]);
   new Promise((resolve, reject) => {
     if (response.length == 0) {
@@ -22,7 +22,7 @@ async function checkBarang(barang) {
 }
 
 async function checkUsername(user) {
-  let sql = "select id from users where $1";
+  let sql = "select id from users where id = $1";
   let response = await db.query(sql, [user]);
   new Promise((resolve, reject) => {
     if (response.length == 0) {

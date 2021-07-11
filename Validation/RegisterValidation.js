@@ -1,26 +1,12 @@
 const { body } = require("express-validator");
 const db = require("../Util/Database");
-
 function validate() {
   return [
     body("email").isEmail().custom(checkEmail),
     body("username").custom(checkUsername),
     body("nama_lengkap").notEmpty(),
-    body("jenis_toko").custom(checkJenis),
     body("no_telp").isMobilePhone(),
   ];
-}
-
-async function checkJenis(jenis) {
-  let sql = "select id from jenis_toko where id= $1";
-  let response = await db.query(sql, [jenis]);
-  new Promise((resolve, reject) => {
-    if (response.length == 0) {
-      reject("Jenis tidak ditemukan");
-    } else {
-      resolve();
-    }
-  });
 }
 
 async function checkUsername(username, { req }) {

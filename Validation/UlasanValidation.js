@@ -10,7 +10,7 @@ function validate() {
 }
 
 async function checkDetail(order_detail) {
-  let sql = "select id from order_detail where $1";
+  let sql = "select id from order_detail where id = $1";
   let response = await db.query(sql, [order_detail]);
   new Promise((resolve, reject) => {
     if (response.length == 0) {
