@@ -4,8 +4,9 @@ function validate() {
   return [
     body("email").isEmail().custom(checkEmail),
     body("username").custom(checkUsername),
-    body("nama_lengkap").notEmpty(),
-    body("no_telp").isMobilePhone(),
+    body("nama_lengkap").notEmpty().withMessage("Isi nama lengkap"),
+    body("password").isLength({ min: 8 }).withMessage("Password terlalu lemah"),
+    body("no_telp").isMobilePhone().withMessage("Nomer telepon tidak valid"),
   ];
 }
 
