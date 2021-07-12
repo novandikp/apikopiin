@@ -20,7 +20,7 @@ async function checkUsername(username, { req }) {
   let res = await db.query(sql, [username]);
   return new Promise((resolve, reject) => {
     if (res.length > 0) {
-      reject("Username telah dipakai");
+      reject("Username telah terpakai, silakan gunakan username dengan kata kunci yang lain.");
     }
     resolve();
   });
@@ -39,7 +39,7 @@ async function checkEmail(email, { req }) {
   let res = await db.query(sql, [email]);
   return new Promise((resolve, reject) => {
     if (res.length > 0) {
-      reject("Email telah dipakai");
+      reject("Email telah terpakai, silakan gunakan email yang lain.");
     }
     resolve();
   });
