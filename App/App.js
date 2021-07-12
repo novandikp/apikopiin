@@ -7,6 +7,7 @@ const Middleware = require("../Middleware/Middleware");
 const Route = require("../Routes/Routes");
 const Cors = require("cors");
 const { encrypt, decrypt } = require("../Util/Encrypt");
+require('dotenv').config()
 //CORS
 var whitelist = [
   "https://webdokter.herokuapp.com",
