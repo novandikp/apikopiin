@@ -4,7 +4,6 @@ const db = require("../Util/Database");
 function validate() {
   return [
     body("id_user").custom(checkUsername),
-    body("tgl_wishlist").isDate(),
     body("id_barang").custom(checkBarang),
   ];
 }

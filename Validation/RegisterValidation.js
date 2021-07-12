@@ -2,11 +2,8 @@ const { body } = require("express-validator");
 const db = require("../Util/Database");
 function validate() {
   return [
-    body("email").isEmail().custom(checkEmail),
+    body("email").custom(checkEmail),
     body("username").custom(checkUsername),
-    body("nama_lengkap").notEmpty().withMessage("Isi nama lengkap"),
-    body("password").isLength({ min: 8 }).withMessage("Password terlalu lemah"),
-    body("no_telp").isMobilePhone().withMessage("Nomer telepon tidak valid"),
   ];
 }
 

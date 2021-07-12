@@ -2,10 +2,7 @@ const { body } = require("express-validator");
 const db = require("../Util/Database");
 
 function validate() {
-  return [
-    body("nama_varian").notEmpty(),
-    body("id_barang").custom(checkBarang),
-  ];
+  return [body("id_barang").custom(checkBarang)];
 }
 
 async function checkBarang(barang) {

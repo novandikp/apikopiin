@@ -4,12 +4,7 @@ const db = require("../Util/Database");
 function validate() {
   return [
     body("id_user").custom(checkUsername),
-    body("tgl_order").isDate(),
     body("id_alamat").custom(checkAlamat),
-    body("no_faktur").notEmpty(),
-    body("metode_pembayaran").notEmpty(),
-    body("status").notEmpty(),
-    body("no_resi").notEmpty(),
   ];
 }
 

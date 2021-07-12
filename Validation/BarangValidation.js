@@ -4,12 +4,7 @@ const db = require("../Util/Database");
 function validate() {
   return [
     body("id_merchant").custom(checkUsername),
-    body("nama").notEmpty(),
-    body("deskripsi").notEmpty(),
     body("id_kategori").custom(checkKategori),
-    body("harga").isNumeric(),
-    body("stok").isNumeric(),
-    body("berat").isNumeric(),
   ];
 }
 

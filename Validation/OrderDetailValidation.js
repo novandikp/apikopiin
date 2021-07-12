@@ -3,8 +3,6 @@ const db = require("../Util/Database");
 
 function validate() {
   return [
-    body("harga").isNumeric(),
-    body("jumlah").isNumeric(),
     body("id_barang").custom(checkBarang),
     body("id_order").custom(checkOrder),
   ];

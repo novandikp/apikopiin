@@ -7,7 +7,7 @@ const validate = require("../Validation/UserValidation");
 //GET
 router.get("/", async function (req, res) {
   let data = await koneksi.query(
-    `SELECT users.id, username, nama_lengkap, nama_toko, jenis_toko, "password", email, no_telp, jenis_toko.jenis from users inner join jenis_toko ON users.jenis_toko = jenis_toko.id`
+    `SELECT users.id, username, nama_lengkap, nama_toko, jenis_toko, "password", email, no_telp, jenis_toko.jenis from users left join jenis_toko ON users.jenis_toko = jenis_toko.id`
   );
   res.status(200).json({
     status: true,
@@ -20,7 +20,7 @@ router.get("/:id", async function (req, res, next) {
   let id = req.params.id;
 
   let data = await koneksi.query(
-    `SELECT users.id, username, nama_lengkap, nama_toko, jenis_toko, "password", email, no_telp, jenis_toko.jenis from users inner join jenis_toko ON users.jenis_toko = jenis_toko.id where users.id = $1`,
+    `SELECT users.id, username, nama_lengkap, nama_toko, jenis_toko, "password", email, no_telp, jenis_toko.jenis from users left join jenis_toko ON users.jenis_toko = jenis_toko.id where users.id = $1`,
     [id]
   );
   if (data.length == 1) {

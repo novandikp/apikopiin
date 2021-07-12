@@ -2,11 +2,7 @@ const { body } = require("express-validator");
 const db = require("../Util/Database");
 
 function validate() {
-  return [
-    body("deskripsi").notEmpty(),
-    body("id_order_detail").custom(checkDetail),
-    body("rating").isNumeric(),
-  ];
+  return [body("id_order_detail").custom(checkDetail)];
 }
 
 async function checkDetail(order_detail) {

@@ -47,7 +47,10 @@ app.use(function (req, res, next) {
 });
 
 //Make body readable
+var multer = require("multer");
+var forms = multer();
 app.use(express.json());
+
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -61,5 +64,20 @@ app.get("/", (req, res) => {
   let a = encrypt("Oke");
   res.send(decrypt(a));
 });
+// var multer = require("multer");
+// var storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, "./public");
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, Date.now() + file.originalname);
+//   },
+// });
+// var upload = multer({ storage: storage });
+// app.post("/", upload.single("uploaded_file"), function (req, res) {
+//   // req.file is the name of your file in the form above, here 'uploaded_file'
+//   // req.body will hold the text fields, if there were any
+//   res.send(req.file);
+// });
 
 module.exports = app;

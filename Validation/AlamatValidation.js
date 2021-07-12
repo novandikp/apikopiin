@@ -2,18 +2,7 @@ const { body } = require("express-validator");
 const db = require("../Util/Database");
 
 function validate() {
-  return [
-    body("id_user").custom(checkUsername),
-    body("nama").notEmpty(),
-    body("detail").notEmpty(),
-    body("provinsi").notEmpty(),
-    body("kota").notEmpty(),
-    body("kecamatan").notEmpty(),
-    body("kodepos").isPostalCode(),
-    body("notelp").isMobilePhone(),
-    body("latitude").isNumeric(),
-    body("longitude").isNumeric(),
-  ];
+  return [body("id_user").custom(checkUsername)];
 }
 
 async function checkUsername(user) {
