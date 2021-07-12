@@ -18,6 +18,7 @@ router.post("/register", validate(), handlerInput, async function (req, res) {
     req.body.email,
     req.body.no_telp,
   ];
+  // console.log('args', data)
   try {
     await koneksi.none(sql, data);
     let token = generate(req.body.username);
@@ -40,11 +41,12 @@ router.post("/login", async function (req, res, next) {
   if (result.length > 0) {
     let token = generate(result[0].username, result[0].roles);
     res.json({
+      status: true,
       token: token,
-      name: result[0].nama_lengkap,
+      data: result[0],
     });
   } else {
-    res.status(404).json({ msg: "Username atau Password tidak ditemukan" });
+    res.status(404).json({ status:false,message: "Username atau Password tidak ditemukan" });
   }
   //
 });
