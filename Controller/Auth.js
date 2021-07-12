@@ -46,7 +46,12 @@ router.post("/login", async function (req, res, next) {
       data: result[0],
     });
   } else {
-    res.status(404).json({ status:false,message: "Username atau Password tidak ditemukan" });
+    res
+      .status(404)
+      .json({
+        status: false,
+        errorMessage: "Username atau Password tidak ditemukan. Harap periksa kembali data yang anda inputkan.",
+      });
   }
   //
 });

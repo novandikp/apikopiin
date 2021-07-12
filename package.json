@@ -20,5 +20,8 @@
   },
   "scripts": {
     "start": "nodemon ./public/index.js"
+  },
+  "prettier":{
+    "tabWidth": 2
   }
 }
