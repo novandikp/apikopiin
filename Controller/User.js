@@ -61,13 +61,10 @@ router.post("/", validate(), handlerInput, function (req, res) {
 router.put("/:id", validate(), handlerInput, async function (req, res) {
   let id = req.params.id;
   let sql = `UPDATE public.users
-  SET  username=$1, nama_lengkap=$2, nama_toko=$3, jenis_toko=$4, password=$5, email=$6, no_telp=$7 where id=$8`;
+  SET  username=$1, nama_lengkap=$2,  email=$3, no_telp=$4 where id=$5`;
   let data = [
     req.body.username,
     req.body.nama_lengkap,
-    req.body.nama_toko,
-    req.body.jenis_toko,
-    req.body.password,
     req.body.email,
     req.body.no_telp,
     id,

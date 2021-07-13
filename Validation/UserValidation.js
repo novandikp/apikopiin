@@ -4,20 +4,8 @@ const db = require("../Util/Database");
 function validate() {
   return [
     body("username").custom(checkUsername),
-    body("jenis_toko").custom(checkJenis),
+    body("email").custom(checkEmail),
   ];
-}
-
-async function checkJenis(jenis) {
-  let sql = "select id from jenis_toko where id= $1";
-  let response = await db.query(sql, [jenis]);
-  new Promise((resolve, reject) => {
-    if (response.length == 0) {
-      reject("Jenis tidak ditemukan");
-    } else {
-      resolve();
-    }
-  });
 }
 
 async function checkUsername(username, { req }) {
