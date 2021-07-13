@@ -37,10 +37,10 @@ router.get("/:id", async function (req, res, next) {
 });
 
 //INSERT
-router.post("/", validate(), handlerInput, function (req, res) {
+router.post("/", validate(), handlerInput, async function (req, res) {
   let sql = `INSERT INTO public.barang(
      id_merchant, id_kategori, nama, deskripsi, harga, berat, stok)
-    VALUES ( $1, $2, $3, $4, $5, $6, $7);`;
+    VALUES ( $1, $2, $3, $4, $5, $6, $7) RETURNING id`;
   let data = [
     req.body.id_merchant,
     req.body.id_kategori,
@@ -48,13 +48,34 @@ router.post("/", validate(), handlerInput, function (req, res) {
     req.body.deskripsi,
     req.body.harga,
     req.body.berat,
-    req.body.stok,
+    "0",
   ];
-  koneksi.none(sql, data);
-  res.status(200).json({
-    status: true,
-    data: req.body,
-  });
+  koneksi
+    .one(sql, data)
+    .then((barang) => {
+      let idbarang = barang.id;
+      if (req.body.varian != undefined) {
+        let varian = req.body.varian;
+        varian.map((value) => {
+          let sqlvarian = `INSERT INTO public.varian(
+          id_barang, nama_varian)
+          VALUES ( $1, $2);`;
+          let datavarian = [idbarang, value];
+          koneksi.none(sqlvarian, datavarian);
+        });
+      }
+
+      res.status(200).json({
+        status: true,
+        data: req.body,
+      });
+    })
+    .catch((e) => {
+      res.status(406).json({
+        status: true,
+        errorMessage: e,
+      });
+    });
 });
 
 //UPDATE BY ID
