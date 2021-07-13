@@ -1,6 +1,7 @@
 var express = require("express");
 var router = express.Router();
 var koneksi = require("../Util/Database");
+const { encrypt } = require("../Util/Encrypt");
 const handlerInput = require("../Util/ValidationHandler");
 const validate = require("../Validation/UserValidation");
 
@@ -76,12 +77,28 @@ router.put("/:id", validate(), handlerInput, async function (req, res) {
   });
 });
 
-router.put("/shop/:id", async function (req, res) {
-  console.log(req.body);
+router.put("/password/:id", async function (req, res) {
   let id = req.params.id;
-  let sql = `UPDATE public.users
-  SET   nama_toko=$1, jenis_toko=$2 where id=$3`;
-  let data = [req.body.nama_toko, req.body.jenis_toko, id];
+  let sql = `UPDATE public.users SET password=$1 where id=$2`;
+  let data = [encrypt(req.body.password), id];
+  koneksi.none(sql, data);
+  res.status(200).json({
+    status: true,
+    data: req.body,
+  });
+});
+
+router.put("/shop/:id", async function (req, res) {
+  let id = req.params.id;
+  let sql = `UPDATE public.users SET nama_toko=$1, jenis_toko=$2, alamat_toko=$3, lat_toko=$4, long_toko=$5 where id=$6`;
+  let data = [
+    req.body.nama_toko,
+    req.body.jenis_toko,
+    req.body.alamat_toko,
+    req.body.lat_toko,
+    req.body.long_toko,
+    id,
+  ];
   koneksi.none(sql, data);
   res.status(200).json({
     status: true,
