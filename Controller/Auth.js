@@ -9,7 +9,7 @@ const handlerInput = require("../Util/ValidationHandler");
 router.post("/register", validate(), handlerInput, async function (req, res) {
   let sql = `INSERT INTO public.users(
     username, nama_lengkap, nama_toko, jenis_toko, password, email, no_telp)
-   VALUES ( $1, $2, $3, NULL, $4, $5, $6);`;
+   VALUES ( $1, $2, $3, NULL, $4, $5, $6) RETURNING ID;`;
   let data = [
     req.body.username,
     req.body.nama_lengkap,
@@ -20,7 +20,8 @@ router.post("/register", validate(), handlerInput, async function (req, res) {
   ];
   // console.log('args', data)
   try {
-    await koneksi.none(sql, data);
+    let user = await koneksi.one(sql, data);
+    req.body.id = user.id;
     let token = generate(req.body.username);
     res.status(200).json({
       status: true,

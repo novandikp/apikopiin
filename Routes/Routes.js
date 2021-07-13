@@ -9,6 +9,7 @@ const Varian = require("../Controller/Varian");
 const Wishlist = require("../Controller/Wishlist");
 const OrderDetail = require("../Controller/OrderDetail");
 const Auth = require("../Controller/Auth");
+const Dashboard = require("../Controller/Dashboard");
 
 function Route(app) {
   app.use("/user", User);
@@ -22,6 +23,7 @@ function Route(app) {
   app.use("/varian", Varian);
   app.use("/wishlist", Wishlist);
   app.use("/auth", Auth);
+  app.use("/dashboard", Dashboard);
 }
 
 module.exports = Route;
