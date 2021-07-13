@@ -1,10 +1,7 @@
 const { body } = require("express-validator");
 const db = require("../Util/Database");
 function validate() {
-  return [
-    body("email").custom(checkEmail),
-    body("username").custom(checkUsername),
-  ];
+  return [body("username").custom(checkUsername)];
 }
 
 async function checkUsername(username, { req }) {
@@ -20,7 +17,9 @@ async function checkUsername(username, { req }) {
   let res = await db.query(sql, [username]);
   return new Promise((resolve, reject) => {
     if (res.length > 0) {
-      reject("Username telah terpakai, silakan gunakan username dengan kata kunci yang lain.");
+      reject(
+        "Username telah terpakai, silakan gunakan username dengan kata kunci yang lain."
+      );
     }
     resolve();
   });

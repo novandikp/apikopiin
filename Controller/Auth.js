@@ -34,6 +34,24 @@ router.post("/register", validate(), handlerInput, async function (req, res) {
   }
 });
 
+router.post("/email", async function (req, res, next) {
+  let sql = `SELECT * FROM users where email=$1 `;
+  let data = [req.body.username];
+  let result = await koneksi.any(sql, data);
+  if (result.length == 0) {
+    res.json({
+      status: true,
+      message: "Email belum terdaftar",
+    });
+  } else {
+    res.status(404).json({
+      status: false,
+      errorMessage: "Email sudah terdaftar",
+    });
+  }
+  //
+});
+
 router.post("/login", async function (req, res, next) {
   let sql = `SELECT * FROM users where (email=$1 or username=$1) and password=$2`;
   let data = [req.body.username, encrypt(req.body.password)];
@@ -46,12 +64,11 @@ router.post("/login", async function (req, res, next) {
       data: result[0],
     });
   } else {
-    res
-      .status(404)
-      .json({
-        status: false,
-        errorMessage: "Username atau Password tidak ditemukan. Harap periksa kembali data yang anda inputkan.",
-      });
+    res.status(404).json({
+      status: false,
+      errorMessage:
+        "Username atau Password tidak ditemukan. Harap periksa kembali data yang anda inputkan.",
+    });
   }
   //
 });
