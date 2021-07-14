@@ -1,4 +1,5 @@
 var express = require("express");
+const db = require("../Util/Database");
 var router = express.Router();
 var koneksi = require("../Util/Database");
 const handlerInput = require("../Util/ValidationHandler");
@@ -44,8 +45,42 @@ router.get("/:id", async function (req, res, next) {
   }
 });
 
+//Masuk keranjang belum ada order pembayaran
+router.post("/", validate(), handlerInput, async function (req, res) {
+  let idorder;
+  let user = req.body.id_user;
+  let sqlorder =
+    "SELECT * FROM orders WHERE id_user=$1 AND status='BELUM BAYAR'";
+  let order = await db.query(sqlorder, [user]);
+  if (order.length == 0) {
+    let idorder = await db.one(
+      "INSERT INTO orders (id_user,status) VALUES ($1,$2) RETURNING ID;",
+      [user, "BELUM BAYAR"]
+    );
+    req.body.id_order = idorder.id;
+  } else {
+    req.body.id_order = order[0].id;
+  }
+  let sql = `INSERT INTO public.order_detail(
+    id_order, id_barang, id_varian, harga, jumlah, keterangan)
+    VALUES ( $1, $2, $3, $4, $5, $6);`;
+  let data = [
+    req.body.id_order,
+    req.body.id_barang,
+    req.body.id_varian,
+    req.body.harga,
+    req.body.jumlah,
+    req.body.keterangan,
+  ];
+  koneksi.none(sql, data);
+  res.status(200).json({
+    status: true,
+    data: req.body,
+  });
+});
+
 //INSERT
-router.post("/", validate(), handlerInput, function (req, res) {
+router.post("/detail", validate(), handlerInput, function (req, res) {
   let sql = `INSERT INTO public.order_detail(
     id_order, id_barang, id_varian, harga, jumlah, keterangan)
     VALUES ( $1, $2, $3, $4, $5, $6);`;
