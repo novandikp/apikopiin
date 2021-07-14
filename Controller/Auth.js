@@ -36,8 +36,9 @@ router.post("/register", validate(), handlerInput, async function (req, res) {
 });
 
 router.post("/email", async function (req, res, next) {
-  let sql = `SELECT * FROM users where email=$1 `;
-  let data = [req.body.email];
+  // console.log('/email', req.body)
+  let sql = `SELECT * FROM users where email=$1 AND id!=$2`;
+  let data = [req.body.email, req.body.id];
   let result = await koneksi.any(sql, data);
   if (result.length == 0) {
     res.json({
