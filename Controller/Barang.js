@@ -15,15 +15,36 @@ router.get("/", async function (req, res) {
   });
 });
 
+//Barang by shop
+router.get("/shop/:id", async function (req, res) {
+  let id = req.params.id;
+  let data = await koneksi.query(
+    `SELECT barang.id, id_merchant, id_kategori, nama, deskripsi, harga, berat, stok,  nama_toko, jenis_toko,  email, no_telp, jenis_toko.jenis from barang  inner join users ON barang.id_merchant = users.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON users.jenis_toko = jenis_toko.id where id_merchant=$1`,
+    [id]
+  );
+  res.status(200).json({
+    status: true,
+    data: data,
+  });
+});
+
 //GET BY ID
 router.get("/:id", async function (req, res, next) {
   let id = req.params.id;
 
   let data = await koneksi.query(
-    `SELECT barang.id, id_merchant, id_kategori, nama, deskripsi, harga, berat, stok, username, nama_lengkap, nama_toko, jenis_toko, email, no_telp, jenis_toko.jenis from barang  inner join users ON barang.id_merchant = users.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON users.jenis_toko = jenis_toko.id where barang.id = $1`,
+    `SELECT barang.id, id_merchant, id_kategori, nama, deskripsi, harga, berat, stok, nama_toko, jenis_toko, email, no_telp, jenis_toko.jenis from barang  inner join users ON barang.id_merchant = users.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON users.jenis_toko = jenis_toko.id where barang.id = $1`,
     [id]
   );
+  let varian = await koneksi.query(
+    `
+  select id, nama_varian  from varian where id_barang = $1
+  `,
+    [id]
+  );
+
   if (data.length == 1) {
+    data[0].varian = varian;
     res.status(200).json({
       status: true,
       data: data[0],
