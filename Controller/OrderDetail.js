@@ -45,13 +45,32 @@ router.get("/:id", async function (req, res, next) {
   }
 });
 
+//GET BY user
+router.get("/user/:id", async function (req, res, next) {
+  let id = req.params.id;
+
+  let data = await koneksi.query(
+    `SELECT order_detail.id,order_detail.id_barang, id_varian, order_detail.harga, jumlah, keterangan,  id_merchant, nama_toko, jenis_toko,  status,  nama, deskripsi, berat, stok, COALESCE(varian.nama_varian,'-') as varian FROM order_detail
+    inner join barang on order_detail.id_barang = barang.id
+    inner join orders on order_detail.id_order= orders.id
+    inner join users on barang.id_merchant = users.id
+    LEFT join varian on order_detail.id_varian = varian.id where id_user = $1`,
+    [id]
+  );
+  res.status(200).json({
+    status: true,
+    data: data,
+  });
+});
+
 //Masuk keranjang belum ada order pembayaran
 router.post("/", validate(), handlerInput, async function (req, res) {
   let idorder;
   let user = req.body.id_user;
+  let merchant = req.body.id_merchant;
   let sqlorder =
-    "SELECT * FROM orders WHERE id_user=$1 AND status='BELUM BAYAR'";
-  let order = await db.query(sqlorder, [user]);
+    "SELECT orders.id FROM order_detail inner join orders on orders.id = order_detail.id_order inner join barang on barang.id = order_detail.id_barang WHERE id_merchant=$1 AND id_user=$2 AND status='BELUM BAYAR'";
+  let order = await db.query(sqlorder, [user, merchant]);
   if (order.length == 0) {
     let idorder = await db.one(
       "INSERT INTO orders (id_user,status) VALUES ($1,$2) RETURNING ID;",
