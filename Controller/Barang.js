@@ -1,4 +1,5 @@
 var express = require("express");
+const { query } = require("../Util/Database");
 var router = express.Router();
 var koneksi = require("../Util/Database");
 const handlerInput = require("../Util/ValidationHandler");
@@ -6,8 +7,24 @@ const validate = require("../Validation/BarangValidation");
 
 //GET
 router.get("/", async function (req, res) {
+  let cari = "";
+  if (req.query.cari) {
+    cari = req.query.cari;
+  }
+
+  let order = "nama";
+  if (req.query.orderby) {
+    order = req.query.orderby;
+    console.log(order);
+  }
+
   let data = await koneksi.query(
-    `SELECT barang.id, id_merchant, id_kategori, nama, deskripsi, harga, berat, stok, username, nama_lengkap, nama_toko, jenis_toko,  email, no_telp, jenis_toko.jenis from barang  inner join users ON barang.id_merchant = users.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON users.jenis_toko = jenis_toko.id`
+    `SELECT barang.id, id_merchant, id_kategori, nama, barang.deskripsi, barang.harga, berat, stok,  nama_toko, jenis_toko,  email, no_telp, jenis_toko.jenis, COALESCE(T.rating,0) as rating from barang  inner join users ON barang.id_merchant = users.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON users.jenis_toko = jenis_toko.id
+    LEFT join 
+    (SELECT id_barang, avg(rating) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id
+    where nama ILIKE '%${cari}%' OR 
+    deskripsi  ILIKE '%${cari}%' OR
+    nama_toko  ILIKE '%${cari}%' ORDER BY ` + order
   );
   res.status(200).json({
     status: true,

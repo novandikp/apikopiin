@@ -122,17 +122,9 @@ router.post("/detail", validate(), handlerInput, function (req, res) {
 router.put("/:id", validate(), handlerInput, async function (req, res) {
   let id = req.params.id;
   let sql = `UPDATE public.order_detail
-	SET id_order=$1, id_barang=$2, id_varian=$3, harga=$4, jumlah=$5, keterangan=$6
-  where id=$7`;
-  let data = [
-    req.body.id_order,
-    req.body.id_barang,
-    req.body.id_varian,
-    req.body.harga,
-    req.body.jumlah,
-    req.body.keterangan,
-    id,
-  ];
+	SET  jumlah=$1, keterangan=$2
+  where id=$3`;
+  let data = [req.body.jumlah, req.body.keterangan, id];
   koneksi.none(sql, data);
   res.status(200).json({
     status: true,

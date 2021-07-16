@@ -10,6 +10,7 @@ const Wishlist = require("../Controller/Wishlist");
 const OrderDetail = require("../Controller/OrderDetail");
 const Auth = require("../Controller/Auth");
 const Dashboard = require("../Controller/Dashboard");
+const Shop = require("../Controller/Shop");
 
 function Route(app) {
   app.use("/user", User);
@@ -24,6 +25,7 @@ function Route(app) {
   app.use("/wishlist", Wishlist);
   app.use("/auth", Auth);
   app.use("/dashboard", Dashboard);
+  app.use("/shop", Shop);
 }
 
 module.exports = Route;
