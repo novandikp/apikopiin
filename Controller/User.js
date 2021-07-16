@@ -1,7 +1,8 @@
 var express = require("express");
+const db = require("../Util/Database");
 var router = express.Router();
 var koneksi = require("../Util/Database");
-const { encrypt } = require("../Util/Encrypt");
+const { encrypt, decrypt } = require("../Util/Encrypt");
 const handlerInput = require("../Util/ValidationHandler");
 const validate = require("../Validation/UserValidation");
 
@@ -24,6 +25,7 @@ router.get("/:id", async function (req, res, next) {
     `SELECT users.id, username, nama_lengkap, nama_toko, jenis_toko, "password", email, no_telp, jenis_toko.jenis from users left join jenis_toko ON users.jenis_toko = jenis_toko.id where users.id = $1`,
     [id]
   );
+
   if (data.length == 1) {
     res.status(200).json({
       status: true,
@@ -79,13 +81,24 @@ router.put("/:id", validate(), handlerInput, async function (req, res) {
 
 router.put("/password/:id", async function (req, res) {
   let id = req.params.id;
-  let sql = `UPDATE public.users SET password=$1 where id=$2`;
-  let data = [encrypt(req.body.password), id];
-  koneksi.none(sql, data);
-  res.status(200).json({
-    status: true,
-    data: req.body,
-  });
+  let passwordlama = req.body.old_password;
+  let check = `SELECT id from users WHERE password=$1 and id=$2`;
+  let data = await db.query(check, [encrypt(passwordlama), id]);
+
+  if (data.length == 0) {
+    res.status(406).json({
+      status: true,
+      errorMessage: "Password Lama Salah",
+    });
+  } else {
+    let sql = `UPDATE users SET password=$1 where id=$2`;
+    let data = [encrypt(req.body.password), id];
+    koneksi.none(sql, data);
+    res.status(200).json({
+      status: true,
+      message: "Password Berhasil diubah",
+    });
+  }
 });
 
 router.put("/shop/:id", async function (req, res) {
