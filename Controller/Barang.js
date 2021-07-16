@@ -21,7 +21,7 @@ router.get("/", async function (req, res) {
   let data = await koneksi.query(
     `SELECT barang.id, id_merchant, id_kategori, nama, barang.deskripsi, barang.harga, berat, stok,  nama_toko, jenis_toko,  email, no_telp, jenis_toko.jenis, COALESCE(T.rating,0) as rating from barang  inner join users ON barang.id_merchant = users.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON users.jenis_toko = jenis_toko.id
     LEFT join 
-    (SELECT id_barang, avg(rating) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id
+    (SELECT id_barang, ROUND(avg(rating),1) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id
     where nama ILIKE '%${cari}%' OR 
     deskripsi  ILIKE '%${cari}%' OR
     nama_toko  ILIKE '%${cari}%' ORDER BY ` + order
