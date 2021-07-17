@@ -60,7 +60,7 @@ router.post("/", validate(), handlerInput, function (req, res) {
   });
 });
 
-//UPDATE BY ID
+//UPDATE Profil
 router.put("/:id", validate(), handlerInput, async function (req, res) {
   let id = req.params.id;
   let sql = `UPDATE public.users
@@ -79,6 +79,7 @@ router.put("/:id", validate(), handlerInput, async function (req, res) {
   });
 });
 
+//Update Password
 router.put("/password/:id", async function (req, res) {
   let id = req.params.id;
   let passwordlama = req.body.old_password;
