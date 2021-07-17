@@ -29,7 +29,7 @@ router.get("/shop", async function (req, res) {
 
 router.get("/product", async function (req, res) {
   let data = await koneksi.query(
-    `SELECT barang.id, id_merchant, id_kategori, nama, deskripsi, harga, berat, stok,  nama_toko, alamat_toko, jenis_toko.jenis from barang  inner join merchant ON barang.id_merchant = merchant.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON merchant.id_jenis = jenis_toko.id limit 5`
+    `SELECT barang.id, id_merchant, id_kategori, nama, deskripsi, harga, berat, stok,  nama_toko, alamat_toko, jenis_toko.jenis from barang  inner join merchant ON barang.id_merchant = merchant.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON merchant.id_jenis = jenis_toko.id limit 12`
   );
   res.status(200).json({
     status: true,
