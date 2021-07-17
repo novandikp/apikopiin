@@ -5,7 +5,7 @@ var koneksi = require("../Util/Database");
 const handlerInput = require("../Util/ValidationHandler");
 const validate = require("../Validation/BarangValidation");
 
-//GET
+//Ambil semua barang
 router.get("/", async function (req, res) {
   let cari = "";
   if (req.query.cari) {

@@ -2,7 +2,6 @@ var express = require("express");
 const db = require("../Util/Database");
 var router = express.Router();
 var koneksi = require("../Util/Database");
-const { route } = require("./Auth");
 
 //Semua toko
 router.get("/", async function (req, res) {
