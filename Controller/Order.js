@@ -1,4 +1,5 @@
 var express = require("express");
+const db = require("../Util/Database");
 var router = express.Router();
 var koneksi = require("../Util/Database");
 const handlerInput = require("../Util/ValidationHandler");
@@ -60,24 +61,37 @@ router.post("/", validate(), handlerInput, function (req, res) {
 });
 
 //Ubah Status Order
-router.put(":status/:id", function (req, res) {
+router.put("/:status/:id", function (req, res) {
+  let status_code = "1";
   let status = req.params.status;
-  if (status) {
-    if (status === "TUNGGU") {
+  let id = req.params.id;
+  if (status && id) {
+    if (status === "tunggu") {
       status_code = "1";
-    } else if (status === "TOLAK") {
+    } else if (status === "tolak") {
       status_code = "2";
-    } else if (status === "TERIMA") {
+    } else if (status === "terima") {
       status_code = "3";
-    } else if (status === "SIAPANTAR") {
+    } else if (status === "siapantar") {
       status_code = "4";
-    } else if (status === "ANTAR") {
+    } else if (status === "antar") {
       status_code = "5";
-    } else if (status === "SUDAHANTAR") {
+    } else if (status === "sudahantar") {
       status_code = "6";
-    } else if (status === "SELESAI") {
+    } else if (status === "selesai") {
       status_code = "7";
     }
+
+    let sqlupdate = `UPDATE orders SET status='${status_code}' WHERE id=${id}`;
+    console.log(sqlupdate);
+    db.none(sqlupdate);
+    res.status(200).json({
+      status: true,
+      data: {
+        id: id,
+        status: status,
+      },
+    });
   }
 });
 

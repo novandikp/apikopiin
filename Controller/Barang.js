@@ -31,7 +31,7 @@ router.get("/", async function (req, res) {
   });
 });
 
-//Barang by shop
+//Barang PER TOKO
 router.get("/shop/:id", async function (req, res) {
   let id = req.params.id;
   let data = await koneksi.query(
@@ -45,7 +45,7 @@ router.get("/shop/:id", async function (req, res) {
   });
 });
 
-//GET BY ID
+//Barang PER ID
 router.get("/:id", async function (req, res, next) {
   let id = req.params.id;
 

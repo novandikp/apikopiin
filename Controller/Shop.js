@@ -17,9 +17,9 @@ router.get("/", async function (req, res) {
 
   if (req.query.lat && req.query.long) {
     data = await koneksi.query(
-      `SELECT nama_toko, jenis_toko.jenis , alamat_toko, lat_toko, long_toko ,
-        ( 3959 * acos( cos( radians($1) ) * cos( radians( lat_toko) ) * cos( radians( long_toko ) - radians($2) ) + sin( radians($1) ) * sin( radians( lat_toko ) ) ) ) AS distance 
-        from users inner join jenis_toko on jenis_toko.id = users.jenis_toko 
+      `SELECT nama_toko, jenis_toko.jenis , alamat_toko,
+      ( 3959 * acos( cos( radians($1) ) * cos( radians( lat_toko) ) * cos( radians( long_toko ) - radians($2) ) + sin( radians($1) ) * sin( radians( lat_toko ) ) ) ) AS distance 
+      from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis 
         where nama_toko like '%${cari}%' or
         alamat_toko like '%${cari}%'
         order by distance, ${order}
@@ -29,8 +29,7 @@ router.get("/", async function (req, res) {
     );
   } else {
     data = await koneksi.query(
-      `SELECT nama_toko, jenis_toko.jenis , alamat_toko, lat_toko, long_toko 
-         from users inner join jenis_toko on jenis_toko.id = users.jenis_toko 
+      `SELECT nama_toko, jenis_toko.jenis , alamat_toko from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis
         where nama_toko like '%${cari}%' or
         alamat_toko like '%${cari}%'
         order by  ${order}

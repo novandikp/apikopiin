@@ -6,6 +6,7 @@ const { encrypt } = require("../Util/Encrypt");
 const validate = require("../Validation/RegisterValidation");
 const handlerInput = require("../Util/ValidationHandler");
 
+//REGISTER
 router.post("/register", validate(), handlerInput, async function (req, res) {
   let sql = `INSERT INTO public.users(
     username, nama_lengkap, password, email, no_telp)
@@ -33,7 +34,7 @@ router.post("/register", validate(), handlerInput, async function (req, res) {
     });
   }
 });
-
+//CHECK EMAIL
 router.post("/email", async function (req, res, next) {
   let sql = `SELECT * FROM users where email=$1 AND id!=$2`;
   let data = [req.body.email, req.body.id];
@@ -51,7 +52,7 @@ router.post("/email", async function (req, res, next) {
   }
   //
 });
-
+//LOGIN
 router.post("/login", async function (req, res, next) {
   let sql = `SELECT * FROM users where (email=$1 or username=$1) and password=$2`;
   let data = [req.body.username, encrypt(req.body.password)];

@@ -39,27 +39,6 @@ router.get("/:id", async function (req, res, next) {
   }
 });
 
-//INSERT
-router.post("/", validate(), handlerInput, function (req, res) {
-  let sql = `INSERT INTO public.users(
-	 username, nama_lengkap, nama_toko, jenis_toko, password, email, no_telp)
-	VALUES ( $1, $2, $3, $4, $5, $6, $7);`;
-  let data = [
-    req.body.username,
-    req.body.nama_lengkap,
-    req.body.nama_toko,
-    req.body.jenis_toko,
-    req.body.password,
-    req.body.email,
-    req.body.no_telp,
-  ];
-  koneksi.none(sql, data);
-  res.status(200).json({
-    status: true,
-    data: req.body,
-  });
-});
-
 //UPDATE Profil
 router.put("/:id", validate(), handlerInput, async function (req, res) {
   let id = req.params.id;
@@ -102,37 +81,64 @@ router.put("/password/:id", async function (req, res) {
   }
 });
 
+//BUAT DAN UPDATE TOKO
 router.put("/shop/:id", async function (req, res) {
-  let id = req.params.id;
-  let sql = `UPDATE public.users SET nama_toko=$1, jenis_toko=$2, alamat_toko=$3, lat_toko=$4, long_toko=$5 where id=$6`;
-  let data = [
-    req.body.nama_toko,
-    req.body.jenis_toko,
-    req.body.alamat_toko,
-    req.body.lat_toko,
-    req.body.long_toko,
-    id,
-  ];
-  koneksi.none(sql, data);
-  res.status(200).json({
-    status: true,
-    data: req.body,
-  });
+  let iduser = req.params.id;
+
+  let cekTokoSQL = `SELECT id_merchant from users where id_merchant is not NULL and id = ${iduser}`;
+  let rowToko = await db.query(cekTokoSQL);
+  if (rowToko.length == 0) {
+    let sql = `INSERT INTO public.merchant(
+    id_jenis, nama_toko, alamat_toko, lat_toko, long_toko)
+    VALUES ($1, $2, $3, $4, $5) RETURNING id;`;
+    let data = [
+      req.body.jenis_toko,
+      req.body.nama_toko,
+      req.body.alamat_toko,
+      req.body.lat_toko,
+      req.body.long_toko,
+    ];
+    let datauser = await koneksi.one(sql, data);
+
+    db.none("UPDATE users set id_merchant=$1 WHERE id=$2", [
+      datauser.id,
+      iduser,
+    ]);
+    res.status(200).json({
+      status: true,
+      data: req.body,
+    });
+  } else {
+    let idmerchant = rowToko[0].id_merchant;
+    let sql = `UPDATE public.merchant
+    SET id_jenis=$1, nama_toko=$2, alamat_toko=$3, lat_toko=$4, long_toko=$5
+    WHERE id=$6;`;
+    let data = [
+      req.body.jenis_toko,
+      req.body.nama_toko,
+      req.body.alamat_toko,
+      req.body.lat_toko,
+      req.body.long_toko,
+      idmerchant,
+    ];
+    db.none(sql, data);
+    res.status(200).json({
+      status: true,
+      data: req.body,
+    });
+  }
 });
 
 router.delete("/:id", async function (req, res, next) {
   let id = req.params.id;
   let sql = `DELETE FROM users WHERE id=$1`;
   let data = [id];
-  let exists = await koneksi.any(
-    "SELECT id_merchant FROM barang where id_merchant = $1",
-    [id]
-  );
+
   let exists2 = await koneksi.any(
     "SELECT id_user FROM orders where id_user = $1",
     [id]
   );
-  if (exists.length == 0 && exists2.length == 0) {
+  if (exists2.length == 0) {
     koneksi.any(sql, data);
     res.status(200).json({
       status: true,

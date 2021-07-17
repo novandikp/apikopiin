@@ -54,7 +54,7 @@ router.post("/", validate(), handlerInput, async function (req, res) {
   let user = req.body.id_user;
   let merchant = req.body.id_merchant;
   let sqlorder =
-    "SELECT orders.id FROM order_detail inner join orders on orders.id = order_detail.id_order inner join barang on barang.id = order_detail.id_barang WHERE id_merchant=$1 AND id_user=$2 AND status='BELUM BAYAR'";
+    "SELECT orders.id FROM order_detail inner join orders on orders.id = order_detail.id_order inner join barang on barang.id = order_detail.id_barang WHERE id_merchant=$1 AND id_user=$2 AND status='0'";
   let order = await db.query(sqlorder, [user, merchant]);
   if (order.length == 0) {
     let idorder = await db.one(
