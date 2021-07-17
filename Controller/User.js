@@ -82,15 +82,15 @@ router.put("/password/:id", async function (req, res) {
 });
 
 //BUAT DAN UPDATE TOKO
-router.put("/shop/:id", async function (req, res) {
+router.post("/shop/:id", async function (req, res) {
   let iduser = req.params.id;
 
   let cekTokoSQL = `SELECT id_merchant from users where id_merchant is not NULL and id = ${iduser}`;
   let rowToko = await db.query(cekTokoSQL);
   if (rowToko.length == 0) {
     let sql = `INSERT INTO public.merchant(
-    id_jenis, nama_toko, alamat_toko, lat_toko, long_toko, provinsi,kota,kecamatan, kodepos)
-    VALUES ($1, $2, $3, $4, $5,$6,$7,$8,$9) RETURNING id;`;
+    id_jenis, nama_toko, alamat_toko, lat_toko, long_toko, provinsi,kota,kecamatan, kodepos,idprovinsi,idkota)
+    VALUES ($1, $2, $3, $4, $5,$6,$7,$8,$9,$10,$11) RETURNING id;`;
     let data = [
       req.body.jenis_toko,
       req.body.nama_toko,
@@ -101,6 +101,8 @@ router.put("/shop/:id", async function (req, res) {
       req.body.kota,
       req.body.kecamatan,
       req.body.kodepos,
+      req.body.idprovinsi,
+      req.body.idkota,
     ];
     let datauser = await koneksi.one(sql, data);
 
@@ -108,6 +110,8 @@ router.put("/shop/:id", async function (req, res) {
       datauser.id,
       iduser,
     ]);
+
+    req.body.id_merchant = datauser.id;
     res.status(200).json({
       status: true,
       data: req.body,
@@ -115,8 +119,8 @@ router.put("/shop/:id", async function (req, res) {
   } else {
     let idmerchant = rowToko[0].id_merchant;
     let sql = `UPDATE public.merchant
-    SET  id_jenis=$1, nama_toko=$2, alamat_toko=$3, lat_toko=$4, long_toko=$5, provinsi=$6, kota=$7, kecamatan=$8, kodepos=$9
-    WHERE id=$10;`;
+    SET  id_jenis=$1, nama_toko=$2, alamat_toko=$3, lat_toko=$4, long_toko=$5, provinsi=$6, kota=$7, kecamatan=$8, kodepos=$9, idprovinsi =$10 , idkota=$11
+    WHERE id=$12;`;
     let data = [
       req.body.jenis_toko,
       req.body.nama_toko,
@@ -127,6 +131,8 @@ router.put("/shop/:id", async function (req, res) {
       req.body.kota,
       req.body.kecamatan,
       req.body.kodepos,
+      req.body.idprovinsi,
+      req.body.idkota,
       idmerchant,
     ];
     db.none(sql, data);
