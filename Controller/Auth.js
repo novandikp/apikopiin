@@ -8,17 +8,16 @@ const handlerInput = require("../Util/ValidationHandler");
 
 router.post("/register", validate(), handlerInput, async function (req, res) {
   let sql = `INSERT INTO public.users(
-    username, nama_lengkap, nama_toko, jenis_toko, password, email, no_telp)
-   VALUES ( $1, $2, $3, NULL, $4, $5, $6) RETURNING ID;`;
+    username, nama_lengkap, password, email, no_telp)
+   VALUES ( $1, $2, $3, $4, $5) RETURNING ID;`;
   let data = [
     req.body.username,
     req.body.nama_lengkap,
-    "-",
     encrypt(req.body.password),
     req.body.email,
     req.body.no_telp,
   ];
-  // console.log('args', data)
+
   try {
     let user = await koneksi.one(sql, data);
     req.body.id = user.id;
@@ -36,7 +35,6 @@ router.post("/register", validate(), handlerInput, async function (req, res) {
 });
 
 router.post("/email", async function (req, res, next) {
-  // console.log('/email', req.body)
   let sql = `SELECT * FROM users where email=$1 AND id!=$2`;
   let data = [req.body.email, req.body.id];
   let result = await koneksi.any(sql, data);

@@ -5,14 +5,17 @@ var koneksi = require("../Util/Database");
 const handlerInput = require("../Util/ValidationHandler");
 const validate = require("../Validation/OrderDetailValidation");
 
-//GET
-router.get("/", async function (req, res) {
+//Ambil Keranjang dari user
+router.get("/user/:id", async function (req, res) {
+  let iduser = req.params.id;
   let data = await koneksi.query(
-    `SELECT order_detail.id, id_order, order_detail.id_barang, id_varian, order_detail.harga, jumlah, keterangan,  id_user,  tgl_order, no_faktur, metode_pembayaran, status, no_resi, nama, deskripsi, berat, stok, COALESCE(varian.nama_varian,'-') FROM order_detail
+    `SELECT order_detail.id, id_order, order_detail.id_barang, id_varian, order_detail.harga, jumlah, keterangan,  id_user, nama, deskripsi, berat, stok, COALESCE(varian.nama_varian,'-')  as varian
+    FROM order_detail
     inner join barang on order_detail.id_barang = barang.id
     inner join orders on order_detail.id_order= orders.id
     inner join users on orders.id_user = users.id
-    LEFT join varian on order_detail.id_varian = varian.id`
+    LEFT join varian on order_detail.id_varian = varian.id
+    where orders.id_user = ${iduser} and status= '0'`
   );
   res.status(200).json({
     status: true,
@@ -20,7 +23,7 @@ router.get("/", async function (req, res) {
   });
 });
 
-//GET BY ID
+//Detail keranjang user
 router.get("/:id", async function (req, res, next) {
   let id = req.params.id;
 
@@ -45,24 +48,6 @@ router.get("/:id", async function (req, res, next) {
   }
 });
 
-//GET BY user
-router.get("/user/:id", async function (req, res, next) {
-  let id = req.params.id;
-
-  let data = await koneksi.query(
-    `SELECT order_detail.id,order_detail.id_barang, id_varian, order_detail.harga, jumlah, keterangan,  id_merchant, nama_toko, jenis_toko,  status,  nama, deskripsi, berat, stok, COALESCE(varian.nama_varian,'-') as varian FROM order_detail
-    inner join barang on order_detail.id_barang = barang.id
-    inner join orders on order_detail.id_order= orders.id
-    inner join users on barang.id_merchant = users.id
-    LEFT join varian on order_detail.id_varian = varian.id where id_user = $1`,
-    [id]
-  );
-  res.status(200).json({
-    status: true,
-    data: data,
-  });
-});
-
 //Masuk keranjang belum ada order pembayaran
 router.post("/", validate(), handlerInput, async function (req, res) {
   let idorder;
@@ -74,7 +59,7 @@ router.post("/", validate(), handlerInput, async function (req, res) {
   if (order.length == 0) {
     let idorder = await db.one(
       "INSERT INTO orders (id_user,status) VALUES ($1,$2) RETURNING ID;",
-      [user, "BELUM BAYAR"]
+      [user, "0"]
     );
     req.body.id_order = idorder.id;
   } else {
@@ -98,27 +83,7 @@ router.post("/", validate(), handlerInput, async function (req, res) {
   });
 });
 
-//INSERT
-router.post("/detail", validate(), handlerInput, function (req, res) {
-  let sql = `INSERT INTO public.order_detail(
-    id_order, id_barang, id_varian, harga, jumlah, keterangan)
-    VALUES ( $1, $2, $3, $4, $5, $6);`;
-  let data = [
-    req.body.id_order,
-    req.body.id_barang,
-    req.body.id_varian,
-    req.body.harga,
-    req.body.jumlah,
-    req.body.keterangan,
-  ];
-  koneksi.none(sql, data);
-  res.status(200).json({
-    status: true,
-    data: req.body,
-  });
-});
-
-//UPDATE BY ID
+//Ubah Keranjang  jumlah dan keterangan dari id
 router.put("/:id", validate(), handlerInput, async function (req, res) {
   let id = req.params.id;
   let sql = `UPDATE public.order_detail
@@ -132,6 +97,7 @@ router.put("/:id", validate(), handlerInput, async function (req, res) {
   });
 });
 
+//Hapus keranjang
 router.delete("/:id", async function (req, res, next) {
   let id = req.params.id;
   let sql = `DELETE FROM order_detail WHERE id=$1`;

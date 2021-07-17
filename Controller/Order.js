@@ -59,6 +59,28 @@ router.post("/", validate(), handlerInput, function (req, res) {
   });
 });
 
+//Ubah Status Order
+router.put(":status/:id", function (req, res) {
+  let status = req.params.status;
+  if (status) {
+    if (status === "TUNGGU") {
+      status_code = "1";
+    } else if (status === "TOLAK") {
+      status_code = "2";
+    } else if (status === "TERIMA") {
+      status_code = "3";
+    } else if (status === "SIAPANTAR") {
+      status_code = "4";
+    } else if (status === "ANTAR") {
+      status_code = "5";
+    } else if (status === "SUDAHANTAR") {
+      status_code = "6";
+    } else if (status === "SELESAI") {
+      status_code = "7";
+    }
+  }
+});
+
 //UPDATE BY ID
 router.put("/:id", validate(), handlerInput, async function (req, res) {
   let id = req.params.id;
