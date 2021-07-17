@@ -30,7 +30,7 @@ router.get("/", async function (req, res) {
     );
   } else {
     data = await koneksi.query(
-      `SELECT nama_toko, jenis_toko.jenis , alamat_toko from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis
+      `SELECT nama_toko, jenis_toko.jenis ,provinsi, kota, kecamatan,kodepos, alamat_toko from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis
         where nama_toko ilike '%${cari}%' or
         alamat_toko ilike '%${cari}%'
         order by  ${order}
@@ -47,7 +47,7 @@ router.get("/", async function (req, res) {
 //Detail toko
 router.get("/:id", async function (req, res) {
   let id = req.params.id;
-  let sql = `SELECT nama_toko, jenis_toko.jenis , alamat_toko,lat_toko, long_toko from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis where merchant.id = ${id}`;
+  let sql = `SELECT nama_toko, jenis_toko.jenis, provinsi, kota, kecamatan,kodepos , alamat_toko,lat_toko, long_toko from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis where merchant.id = ${id}`;
   let data = await db.one(sql);
   res.status(200).send({
     status: true,

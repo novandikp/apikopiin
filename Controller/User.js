@@ -89,14 +89,18 @@ router.put("/shop/:id", async function (req, res) {
   let rowToko = await db.query(cekTokoSQL);
   if (rowToko.length == 0) {
     let sql = `INSERT INTO public.merchant(
-    id_jenis, nama_toko, alamat_toko, lat_toko, long_toko)
-    VALUES ($1, $2, $3, $4, $5) RETURNING id;`;
+    id_jenis, nama_toko, alamat_toko, lat_toko, long_toko, provinsi,kota,kecamatan, kodepos)
+    VALUES ($1, $2, $3, $4, $5,$6,$7,$8,$9) RETURNING id;`;
     let data = [
       req.body.jenis_toko,
       req.body.nama_toko,
       req.body.alamat_toko,
       req.body.lat_toko,
       req.body.long_toko,
+      req.body.provinsi,
+      req.body.kota,
+      req.body.kecamatan,
+      req.body.kodepos,
     ];
     let datauser = await koneksi.one(sql, data);
 
@@ -111,14 +115,18 @@ router.put("/shop/:id", async function (req, res) {
   } else {
     let idmerchant = rowToko[0].id_merchant;
     let sql = `UPDATE public.merchant
-    SET id_jenis=$1, nama_toko=$2, alamat_toko=$3, lat_toko=$4, long_toko=$5
-    WHERE id=$6;`;
+    SET  id_jenis=$1, nama_toko=$2, alamat_toko=$3, lat_toko=$4, long_toko=$5, provinsi=$6, kota=$7, kecamatan=$8, kodepos=$9
+    WHERE id=$10;`;
     let data = [
       req.body.jenis_toko,
       req.body.nama_toko,
       req.body.alamat_toko,
       req.body.lat_toko,
       req.body.long_toko,
+      req.body.provinsi,
+      req.body.kota,
+      req.body.kecamatan,
+      req.body.kodepos,
       idmerchant,
     ];
     db.none(sql, data);
