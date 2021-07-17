@@ -1,8 +1,10 @@
 var express = require("express");
+const db = require("../Util/Database");
 var router = express.Router();
 var koneksi = require("../Util/Database");
+const { route } = require("./Auth");
 
-//ambil toko
+//Semua toko
 router.get("/", async function (req, res) {
   let data = [];
   let cari = "";
@@ -38,6 +40,17 @@ router.get("/", async function (req, res) {
   }
 
   res.status(200).json({
+    status: true,
+    data: data,
+  });
+});
+
+//Detail toko
+router.get("/:id", async function (req, res) {
+  let id = req.params.id;
+  let sql = `SELECT nama_toko, jenis_toko.jenis , alamat_toko,lat_toko, long_toko from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis where merchant.id = ${id}`;
+  let data = await db.one(sql);
+  res.status(200).send({
     status: true,
     data: data,
   });
