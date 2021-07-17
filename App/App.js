@@ -7,7 +7,7 @@ const Middleware = require("../Middleware/Middleware");
 const Route = require("../Routes/Routes");
 const Cors = require("cors");
 const { encrypt, decrypt } = require("../Util/Encrypt");
-require('dotenv').config()
+require("dotenv").config();
 //CORS
 var whitelist = [
   "https://webdokter.herokuapp.com",
@@ -48,37 +48,22 @@ app.use(function (req, res, next) {
 });
 
 //Make body readable
-var multer = require("multer");
-var forms = multer();
+
 app.use(express.json());
 
 app.use(express.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, "public")));
+
+app.use(express.static(path.join(__dirname, "..", "public")));
 
 //Add middleware
 // app.use(Middleware);
 
+app.use(express.static(path.join(__dirname, "..", "public", "uploads")));
 //Add Routes
 Route(app);
 
 app.get("/", (req, res) => {
-  let a = encrypt("Oke");
-  res.send(decrypt(a));
+  res.send(path.join(__dirname, "..", "public", "uploads"));
 });
-// var multer = require("multer");
-// var storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, "./public");
-//   },
-//   filename: function (req, file, cb) {
-//     cb(null, Date.now() + file.originalname);
-//   },
-// });
-// var upload = multer({ storage: storage });
-// app.post("/", upload.single("uploaded_file"), function (req, res) {
-//   // req.file is the name of your file in the form above, here 'uploaded_file'
-//   // req.body will hold the text fields, if there were any
-//   res.send(req.file);
-// });
 
 module.exports = app;

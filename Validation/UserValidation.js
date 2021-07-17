@@ -10,7 +10,8 @@ function validate() {
 
 async function checkUsername(username, { req }) {
   let sql;
-  if (req.method == "PUT") {
+  if (req.params.id) {
+    console.log("load");
     sql =
       "select username from users where username = $1 and id !='" +
       req.params.id +
@@ -18,6 +19,7 @@ async function checkUsername(username, { req }) {
   } else {
     sql = "select username from users where username = $1";
   }
+
   let res = await db.query(sql, [username]);
   return new Promise((resolve, reject) => {
     if (res.length > 0) {
@@ -29,7 +31,7 @@ async function checkUsername(username, { req }) {
 
 async function checkEmail(email, { req }) {
   let sql;
-  if (req.method == "PUT") {
+  if (req.params.id) {
     sql =
       "select email from users where email = $1 and id !='" +
       req.params.id +

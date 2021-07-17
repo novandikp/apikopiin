@@ -5,7 +5,7 @@ var koneksi = require("../Util/Database");
 const { encrypt, decrypt } = require("../Util/Encrypt");
 const handlerInput = require("../Util/ValidationHandler");
 const validate = require("../Validation/UserValidation");
-
+var multer = require("multer");
 //GET
 router.get("/", async function (req, res) {
   let data = await koneksi.query(
@@ -38,6 +38,63 @@ router.get("/:id", async function (req, res, next) {
     });
   }
 });
+
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./public/uploads/image/user");
+  },
+
+  filename: function (req, file, cb) {
+    let ext =
+      file.originalname.split(".")[file.originalname.split(".").length - 1];
+    let sql = `UPDATE public.users SET foto_user=$1 where id=$2`;
+    let data = [req.params.id + "." + ext, req.params.id];
+    db.none(sql, data);
+
+    cb(null, req.params.id + "." + ext);
+  },
+});
+var upload = multer({
+  storage: storage,
+});
+
+router.post("/fotoprofil/:id", upload.single("foto_user"), function (req, res) {
+  res.send({
+    status: true,
+    data: { filename: req.file.filename, id: req.params.id },
+  });
+});
+
+var storagemerchant = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./public/uploads/image/merchant");
+  },
+
+  filename: function (req, file, cb) {
+    let ext =
+      file.originalname.split(".")[file.originalname.split(".").length - 1];
+    let sql = `UPDATE public.merchant SET foto_merchant=$1 where id=$2`;
+    let data = [req.params.id + "." + ext, req.params.id];
+    db.none(sql, data);
+
+    cb(null, req.params.id + "." + ext);
+  },
+});
+
+var uploadmerchant = multer({
+  storage: storagemerchant,
+});
+
+router.post(
+  "/fotomerchant/:id",
+  uploadmerchant.single("foto_merchant"),
+  function (req, res) {
+    res.send({
+      status: true,
+      data: { filename: req.file.filename, id: req.params.id },
+    });
+  }
+);
 
 //UPDATE Profil
 router.put("/:id", validate(), handlerInput, async function (req, res) {
