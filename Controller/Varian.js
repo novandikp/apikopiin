@@ -76,7 +76,6 @@ router.delete("/:id", async function (req, res, next) {
   koneksi.any(sql, data);
   res.status(200).json({
     status: true,
-    data: exists[0],
   }); //
 });
 module.exports = router;
