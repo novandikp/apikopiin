@@ -188,6 +188,7 @@ var upload = multer({
   storage: storage,
 });
 //Post Foto barang
+//Buat folder barang di upload image barang
 router.post("/foto/:id", upload.single("foto_barang"), function (req, res) {
   res.send({
     status: true,
