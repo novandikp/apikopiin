@@ -54,15 +54,18 @@ router.get("/:id", async function (req, res, next) {
     from barang  inner join merchant ON barang.id_merchant = merchant.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON merchant.id_jenis = jenis_toko.id LEFT join (SELECT id_barang, ROUND(avg(rating),1) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id where barang.id = $1`,
     [id]
   );
+
   let varian = await koneksi.query(
-    `
-  select id, nama_varian  from varian where id_barang = $1
-  `,
+    `select id, nama_varian  from varian where id_barang = $1`,
     [id]
   );
 
   if (data.length == 1) {
+    let terkaitsql = `SELECT barang.id, id_merchant, id_kategori, nama, barang.deskripsi, barang.harga, berat, stok,  nama_toko, jenis_toko.jenis, COALESCE(T.rating,0) as rating 
+    from barang  inner join merchant ON barang.id_merchant = merchant.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON merchant.id_jenis = jenis_toko.id LEFT join (SELECT id_barang, ROUND(avg(rating),1) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id where barang.id_kategori = $1 LIMIT 10`;
+    let barangterkait = await koneksi.query(terkaitsql, [data[0].id_kategori]);
     data[0].varian = varian;
+    data[0].terkait = barangterkait;
     res.status(200).json({
       status: true,
       data: data[0],

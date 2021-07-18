@@ -22,7 +22,7 @@ router.get("/:id", async function (req, res, next) {
   let id = req.params.id;
 
   let data = await koneksi.query(
-    `SELECT users.id, username, nama_lengkap,  email, no_telp  from users  where users.id = $1`,
+    `SELECT users.id, foto_user, username, nama_lengkap,  email, no_telp  from users  where users.id = $1`,
     [id]
   );
 
