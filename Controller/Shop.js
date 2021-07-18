@@ -47,7 +47,7 @@ router.get("/", async function (req, res) {
 //Detail toko
 router.get("/:id", async function (req, res) {
   let id = req.params.id;
-  let sql = `SELECT nama_toko, id_jenis as jenis_toko, idprovinsi, idkota, jenis_toko.jenis, provinsi, kota, kecamatan,kodepos , alamat_toko,lat_toko, long_toko from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis where merchant.id = ${id}`;
+  let sql = `SELECT nama_toko,foto_merchant, id_jenis as jenis_toko, idprovinsi, idkota, jenis_toko.jenis, provinsi, kota, kecamatan,kodepos , alamat_toko,lat_toko, long_toko from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis where merchant.id = ${id}`;
   let data = await db.one(sql);
   res.status(200).send({
     status: true,
