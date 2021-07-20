@@ -16,9 +16,10 @@ router.get("/", async function (req, res) {
     order = req.query.orderby;
   }
 
-  if (req.query.lat && req.query.long) {
+  // if (req.query.lat && req.query.long || true) {}
+  try {
     data = await koneksi.query(
-      `SELECT nama_toko, jenis_toko.jenis ,provinsi, kota, kecamatan,kodepos, alamat_toko, foto_merchant
+      `SELECT nama_toko, jenis_toko.jenis ,provinsi, kota, kecamatan,kodepos, alamat_toko, foto_merchant,
       ( 3959 * acos( cos( radians($1) ) * cos( radians( lat_toko) ) * cos( radians( long_toko ) - radians($2) ) + sin( radians($1) ) * sin( radians( lat_toko ) ) ) ) AS distance 
       from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis 
         where nama_toko ilike '%${cari}%' or
@@ -28,20 +29,19 @@ router.get("/", async function (req, res) {
         `,
       [req.query.lat, req.query.long]
     );
-  } else {
-    data = await koneksi.query(
-      `SELECT nama_toko,foto_merchant, jenis_toko.jenis ,provinsi, kota, kecamatan,kodepos, alamat_toko from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis
-        where nama_toko ilike '%${cari}%' or
-        alamat_toko ilike '%${cari}%'
-        order by  ${order}
-          `
-    );
+  
+    res.status(200).json({
+      status: true,
+      data: data,
+    });  
+  } catch (e) {
+    res.status(500).json({
+      status: false,
+      data: data,
+      errorMessage: e.message
+    });
   }
-
-  res.status(200).json({
-    status: true,
-    data: data,
-  });
+  
 });
 
 //Detail toko
