@@ -44,9 +44,6 @@ router.get("/user/:id", async function (req, res, next) {
   if (req.query.cari) {
     cari = req.query.cari;
   }
-  console.log(`SELECT alamat.id, id_user, nama, detail, provinsi, kota, kecamatan, kodepos, alamat.no_telp, latitude, longitude,  username, nama_lengkap, email from alamat 
-  INNER join users on alamat.id_user = users.id where alamat.id_user = $1 AND 
-  (nama ILIKE '%${cari}%' OR detail ILIKE '%${cari}%' OR alamat.no_telp ILIKE '%${cari}%')`);
   let data = await koneksi.query(
     `SELECT alamat.id, id_user, nama, detail, provinsi, kota, kecamatan, kodepos, alamat.no_telp, latitude, longitude,  username, nama_lengkap, email from alamat 
       INNER join users on alamat.id_user = users.id where alamat.id_user = $1 AND 
@@ -63,7 +60,7 @@ router.get("/user/:id", async function (req, res, next) {
 //INSERT
 router.post("/", validate(), handlerInput, function (req, res) {
   let sql = `INSERT INTO public.alamat(
-    id_user, nama, detail, provinsi, kota, kecamatan, kodepos, no_telp, latitude, longitude, idprovinsi, idkota,, alamat_map)
+    id_user, nama, detail, provinsi, kota, kecamatan, kodepos, no_telp, latitude, longitude, idprovinsi, idkota, alamat_map)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13);`;
   let data = [
     req.body.id_user,
@@ -80,11 +77,20 @@ router.post("/", validate(), handlerInput, function (req, res) {
     req.body.idkota,
     req.body.alamat_map,
   ];
-  koneksi.none(sql, data);
-  res.status(200).json({
-    status: true,
-    data: req.body,
+  // console.log(data)
+  koneksi.none(sql, data).then(data => {
+    res.status(200).json({
+      status: true,
+      data: req.body,
+    });
+  }).catch((e) => {
+    res.status(500).json({
+      status: false,
+      data: req.body,
+      errorMessage: e.error
+    });
   });
+  
 });
 
 //UPDATE BY ID
