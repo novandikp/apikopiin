@@ -7,7 +7,7 @@ router.get("/shop", async function (req, res) {
   let data = [];
   if (req.query.lat && req.query.long) {
     data = await koneksi.query(
-      `SELECT nama_toko, jenis_toko.jenis , alamat_toko,
+      `SELECT nama_toko, jenis_toko.jenis , alamat_toko, foto_merchant,
         ( 3959 * acos( cos( radians($1) ) * cos( radians( lat_toko) ) * cos( radians( long_toko ) - radians($2) ) + sin( radians($1) ) * sin( radians( lat_toko ) ) ) ) AS distance 
         from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis 
         order by distance
@@ -17,7 +17,7 @@ router.get("/shop", async function (req, res) {
     );
   } else {
     data = await koneksi.query(
-      `SELECT nama_toko, jenis_toko.jenis , alamat_toko from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis limit 10`
+      `SELECT nama_toko, jenis_toko.jenis , alamat_toko, foto_merchant from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis limit 10`
     );
   }
 
