@@ -2,6 +2,6 @@
 
 # dependencies
 /node_modules
-/public/uploads/image
+
 .env
 package-lock.json
