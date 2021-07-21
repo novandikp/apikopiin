@@ -58,7 +58,7 @@ router.get("/:id", async function (req, res, next) {
   let id = req.params.id;
 
   let data = await koneksi.query(
-    `SELECT barang.id, id_merchant, id_kategori, foto_barang, nama, barang.deskripsi, barang.harga, berat, stok,  nama_toko, jenis_toko.jenis, COALESCE(T.rating,0) as rating 
+    `SELECT barang.id, id_merchant, id_kategori, foto_barang,foto_merchant, nama, barang.deskripsi, barang.harga, berat, stok,  nama_toko, jenis_toko.jenis, COALESCE(T.rating,0) as rating 
     from barang  inner join merchant ON barang.id_merchant = merchant.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON merchant.id_jenis = jenis_toko.id LEFT join (SELECT id_barang, ROUND(avg(rating),1) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id where barang.id = $1`,
     [id]
   );
@@ -70,7 +70,7 @@ router.get("/:id", async function (req, res, next) {
 
   if (data.length == 1) {
     let terkaitsql = `SELECT barang.id, foto_barang, id_merchant, id_kategori, nama, barang.deskripsi, barang.harga, berat, stok,  nama_toko, jenis_toko.jenis, COALESCE(T.rating,0) as rating 
-    from barang  inner join merchant ON barang.id_merchant = merchant.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON merchant.id_jenis = jenis_toko.id LEFT join (SELECT id_barang, ROUND(avg(rating),1) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id where barang.id_kategori = $1 LIMIT 10`;
+    from barang  inner join merchant ON barang.id_merchant = merchant.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON merchant.id_jenis = jenis_toko.id LEFT join (SELECT id_barang, ROUND(avg(rating),1) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id where barang.id != ${id} and  barang.id_kategori = $1 LIMIT 10`;
     let barangterkait = await koneksi.query(terkaitsql, [data[0].id_kategori]);
     data[0].varian = varian;
     data[0].terkait = barangterkait;

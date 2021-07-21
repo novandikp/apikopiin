@@ -5,11 +5,11 @@ var koneksi = require("../Util/Database");
 //ambil toko
 router.get("/shop", async function (req, res) {
   let data = [];
-  console.log(req.query)
+  console.log(req.query);
   // if (req.query.lat && req.query.long || true) {}
   try {
     data = await koneksi.query(
-      `SELECT nama_toko, foto_merchant, jenis_toko.jenis , alamat_toko, kota,
+      `SELECT merchant.id,nama_toko, foto_merchant, jenis_toko.jenis , alamat_toko, kota,
         ( 3959 * acos( cos( radians($1) ) * cos( radians( lat_toko) ) * cos( radians( long_toko ) - radians($2) ) + sin( radians($1) ) * sin( radians( lat_toko ) ) ) ) AS distance 
         from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis 
         order by distance
@@ -17,7 +17,7 @@ router.get("/shop", async function (req, res) {
         `,
       [req.query.lat, req.query.long]
     );
-  
+
     res.status(200).json({
       status: true,
       data: data,
@@ -26,10 +26,9 @@ router.get("/shop", async function (req, res) {
     res.status(500).json({
       status: false,
       data: data,
-      errorMessage: e.message
+      errorMessage: e.message,
     });
   }
-  
 });
 
 router.get("/product", async function (req, res) {
