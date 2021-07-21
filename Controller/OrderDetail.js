@@ -53,30 +53,46 @@ router.post("/", validate(), handlerInput, async function (req, res) {
   let idorder;
   let user = req.body.id_user;
   let merchant = req.body.id_merchant;
-  let sqlorder =
-    "SELECT orders.id FROM order_detail inner join orders on orders.id = order_detail.id_order inner join barang on barang.id = order_detail.id_barang WHERE id_merchant=$1 AND id_user=$2 AND status='0'";
-  let order = await db.query(sqlorder, [user, merchant]);
-  if (order.length == 0) {
-    let idorder = await db.one(
-      "INSERT INTO orders (id_user,status) VALUES ($1,$2) RETURNING ID;",
-      [user, "0"]
-    );
-    req.body.id_order = idorder.id;
+  let varian;
+  if (req.body.id_varian == undefined) {
+    varian = "id_varian is NULL";
   } else {
-    req.body.id_order = order[0].id;
+    varian = "id_varian = " + req.body.id_varian;
   }
-  let sql = `INSERT INTO public.order_detail(
+  let sqlorderdetail = `select order_detail.id from order_detail inner join orders on orders.id = order_detail.id_order where id_barang =$1 and ${varian} AND status='0'`;
+
+  let detail = await db.query(sqlorderdetail, [req.body.id_barang]);
+  if (detail.length == 0) {
+    let sqlorder =
+      "SELECT orders.id FROM order_detail inner join orders on orders.id = order_detail.id_order inner join barang on barang.id = order_detail.id_barang WHERE id_merchant=$1 AND id_user=$2 AND status='0'";
+    let order = await db.query(sqlorder, [user, merchant]);
+    if (order.length == 0) {
+      let idorder = await db.one(
+        "INSERT INTO orders (id_user,status) VALUES ($1,$2) RETURNING ID;",
+        [user, "0"]
+      );
+      req.body.id_order = idorder.id;
+    } else {
+      req.body.id_order = order[0].id;
+    }
+    let sql = `INSERT INTO public.order_detail(
     id_order, id_barang, id_varian, harga, jumlah, keterangan)
     VALUES ( $1, $2, $3, $4, $5, $6);`;
-  let data = [
-    req.body.id_order,
-    req.body.id_barang,
-    req.body.id_varian,
-    req.body.harga,
-    req.body.jumlah,
-    req.body.keterangan,
-  ];
-  koneksi.none(sql, data);
+    let data = [
+      req.body.id_order,
+      req.body.id_barang,
+      req.body.id_varian,
+      req.body.harga,
+      req.body.jumlah,
+      req.body.keterangan,
+    ];
+    koneksi.none(sql, data);
+  } else {
+    let sql = `UPDATE public.order_detail	SET  jumlah=jumlah + $1  where id=$2`;
+    let data = [req.body.jumlah, detail[0].id];
+    koneksi.none(sql, data);
+  }
+
   res.status(200).json({
     status: true,
     data: req.body,
