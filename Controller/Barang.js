@@ -19,12 +19,23 @@ router.get("/", async function (req, res) {
     console.log(order);
   }
 
+  let limit = "10";
+  let offset = "0";
+  if (req.query.limit) {
+    limit = req.query.limit;
+  }
+  if (req.query.offset) {
+    offset = req.query.offset;
+  }
+
   let data = await koneksi.query(
     `SELECT barang.id, foto_barang, id_merchant, id_kategori, nama, barang.deskripsi, barang.harga, berat, stok,  nama_toko, jenis_toko.jenis, COALESCE(T.rating,0) as rating 
     from barang  inner join merchant ON barang.id_merchant = merchant.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON merchant.id_jenis = jenis_toko.id LEFT join (SELECT id_barang, ROUND(avg(rating),1) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id
     where nama ILIKE '%${cari}%' OR 
     deskripsi  ILIKE '%${cari}%' OR
-    nama_toko  ILIKE '%${cari}%' ORDER BY ` + order
+    nama_toko  ILIKE '%${cari}%'  ORDER BY ` +
+      order +
+      ` limit ${limit} offset ${offset}`
   );
   res.status(200).json({
     status: true,
@@ -38,13 +49,21 @@ router.get("/shop/:id", async function (req, res) {
   if (req.query.cari) {
     cari = req.query.cari;
   }
+  let limit = "10";
+  let offset = "0";
+  if (req.query.limit) {
+    limit = req.query.limit;
+  }
+  if (req.query.offset) {
+    offset = req.query.offset;
+  }
   let id = req.params.id;
   let data = await koneksi.query(
     `SELECT barang.id, foto_barang, id_merchant, id_kategori, nama, barang.deskripsi, barang.harga, berat, stok,  nama_toko, jenis_toko.jenis, COALESCE(T.rating,0) as rating 
     from barang  inner join merchant ON barang.id_merchant = merchant.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON merchant.id_jenis = jenis_toko.id LEFT join (SELECT id_barang, ROUND(avg(rating),1) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id where id_merchant=$1 and (
       nama ILIKE '%${cari}%' OR 
       deskripsi  ILIKE '%${cari}%' 
-    )`,
+    )  limit ${limit} offset ${offset}`,
     [id]
   );
   res.status(200).json({

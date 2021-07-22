@@ -11,6 +11,15 @@ router.get("/", async function (req, res) {
     cari = req.query.cari;
   }
 
+  let limit = "10";
+  let offset = "0";
+  if (req.query.limit) {
+    limit = req.query.limit;
+  }
+  if (req.query.offset) {
+    offset = req.query.offset;
+  }
+
   let order = "nama_toko";
   if (req.query.orderby) {
     order = req.query.orderby;
@@ -25,7 +34,7 @@ router.get("/", async function (req, res) {
         where nama_toko ilike '%${cari}%' or
         alamat_toko ilike '%${cari}%'
         order by distance, ${order}
-    
+        limit ${limit} offset ${offset}
         `,
       [req.query.lat, req.query.long]
     );
