@@ -24,7 +24,7 @@ router.get("/user/:id", async function (req, res) {
   data = groupBy(data, "id_order");
   orders.forEach((item, index, object) => {
     item["selected"] = true;
-    if (data[item.id].length > 0) {
+    if (data[item.id]) {
       item["orderdetail"] = data[item.id];
       item["nama_toko"] = data[item.id][0]["nama_toko"];
     } else {
