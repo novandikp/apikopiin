@@ -13,16 +13,18 @@ router.get("/user/:id", async function (req, res) {
   );
 
   let data = await koneksi.query(
-    `SELECT order_detail.id, id_order, order_detail.id_barang, id_varian, order_detail.harga, jumlah, keterangan,  id_user, nama, deskripsi, berat, stok, COALESCE(varian.nama_varian,'-')  as varian
+    `SELECT order_detail.id,nama_toko, id_order, order_detail.id_barang, id_varian, order_detail.harga, jumlah, keterangan,  id_user, nama, deskripsi, berat, stok, COALESCE(varian.nama_varian,'-')  as varian
     FROM order_detail
     inner join barang on order_detail.id_barang = barang.id
     inner join orders on order_detail.id_order= orders.id
     LEFT join varian on order_detail.id_varian = varian.id
+    inner join merchant on barang.id_merchant = merchant.id
     where orders.id_user = ${iduser} and status= '0'`
   );
   data = groupBy(data, "id_order");
   orders.forEach((item) => {
     item["detail"] = data[item.id];
+    item["nama_toko"] = data[item.id][0]["nama_toko"];
   });
 
   res.status(200).json({
