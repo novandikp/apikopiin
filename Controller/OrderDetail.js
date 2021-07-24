@@ -13,7 +13,7 @@ router.get("/user/:id", async function (req, res) {
   );
 
   let data = await koneksi.query(
-    `SELECT order_detail.id,nama_toko, id_order, order_detail.id_barang, id_varian, order_detail.harga, jumlah, keterangan,  id_user, nama, deskripsi, berat, stok, COALESCE(varian.nama_varian,'-')  as varian
+    `SELECT order_detail.id,nama_toko, foto_barang, id_order, order_detail.id_barang, id_varian, order_detail.harga, jumlah, keterangan,  id_user, nama, deskripsi, berat, stok, COALESCE(varian.nama_varian,'-')  as varian
     FROM order_detail
     inner join barang on order_detail.id_barang = barang.id
     inner join orders on order_detail.id_order= orders.id
@@ -22,9 +22,14 @@ router.get("/user/:id", async function (req, res) {
     where orders.id_user = ${iduser} and status= '0'`
   );
   data = groupBy(data, "id_order");
-  orders.forEach((item) => {
-    item["detail"] = data[item.id];
-    item["nama_toko"] = data[item.id][0]["nama_toko"];
+  orders.forEach((item, index, object) => {
+    item["selected"] = true;
+    if (data[item.id].length > 0) {
+      item["orderdetail"] = data[item.id];
+      item["nama_toko"] = data[item.id][0]["nama_toko"];
+    } else {
+      object.splice(index, 1);
+    }
   });
 
   res.status(200).json({
@@ -88,13 +93,13 @@ router.post("/", validate(), handlerInput, async function (req, res) {
     } else {
       varian = "id_varian = " + req.body.id_varian;
     }
-    let sqlorderdetail = `select order_detail.id from order_detail inner join orders on orders.id = order_detail.id_order where id_barang =$1 and ${varian} AND status='0'`;
+    let sqlorderdetail = `select order_detail.id from order_detail inner join orders on orders.id = order_detail.id_order where id_barang ='${req.body.id_barang}' and ${varian} AND status='0'`;
 
-    let detail = await db.query(sqlorderdetail, [req.body.id_barang]);
+    let detail = await db.query(sqlorderdetail);
     if (detail.length == 0) {
-      let sqlorder =
-        "SELECT orders.id FROM order_detail inner join orders on orders.id = order_detail.id_order inner join barang on barang.id = order_detail.id_barang WHERE id_merchant=$1 AND id_user=$2 AND status='0'";
-      let order = await db.query(sqlorder, [user, merchant]);
+      let sqlorder = `SELECT orders.id FROM order_detail inner join orders on orders.id = order_detail.id_order inner join barang on barang.id = order_detail.id_barang WHERE id_merchant=${merchant} AND id_user=${user} AND status='0'`;
+      console.log(sqlorder);
+      let order = await db.query(sqlorder);
       if (order.length == 0) {
         let idorder = await db.one(
           "INSERT INTO orders (id_user,status,id_alamat) VALUES ($1,$2,$3) RETURNING ID;",
@@ -132,7 +137,7 @@ router.post("/", validate(), handlerInput, async function (req, res) {
 //Ubah Keranjang  jumlah dan keterangan dari id
 router.put("/:id", validate(), handlerInput, async function (req, res) {
   let id = req.params.id;
-  let sql = `UPDATE public.order_detail
+  let sql = `UPDATE order_detail
 	SET  jumlah=$1, keterangan=$2
   where id=$3`;
   let data = [req.body.jumlah, req.body.keterangan, id];
@@ -143,15 +148,46 @@ router.put("/:id", validate(), handlerInput, async function (req, res) {
   });
 });
 
+//Ubah Keranjang  jumlah dan keterangan dari id
+router.post("/v2", async function (req, res) {
+  let dataBody = req.body;
+  console.log(dataBody);
+  db.tx((t) => {
+    const queries = dataBody.map((c) => {
+      return t.none(
+        `update public.order_detail
+      SET  jumlah=$1, keterangan=$2
+      where id=$3`,
+        [c.jumlah, c.keterangan, c.id]
+      );
+    });
+    return t.batch(queries);
+  })
+    .then((data) => {
+      // success
+      res.status(200).json({
+        status: true,
+        data: req.body,
+      });
+    })
+    .catch((error) => {
+      res.status(404).json({
+        status: true,
+        errorMessage: error,
+      });
+      // error
+    });
+});
+
 //Hapus keranjang
 router.delete("/:id", async function (req, res, next) {
   let id = req.params.id;
+
   let sql = `DELETE FROM order_detail WHERE id=$1`;
   let data = [id];
   koneksi.any(sql, data);
   res.status(200).json({
     status: true,
-    data: exists[0],
   }); //
 });
 module.exports = router;
