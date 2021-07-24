@@ -9,7 +9,7 @@ const validate = require("../Validation/OrderDetailValidation");
 router.get("/user/:id", async function (req, res) {
   let iduser = req.params.id;
   let orders = await koneksi.query(
-    `select orders.id ,  nama, detail, provinsi, kota, kecamatan, kodepos, no_telp from orders inner join alamat on orders.id_alamat = alamat.id where orders.id_user = ${iduser}`
+    `select orders.id , orders.id_alamat,  nama, detail, provinsi, kota, kecamatan, kodepos, no_telp from orders inner join alamat on orders.id_alamat = alamat.id where orders.id_user = ${iduser}`
   );
 
   let data = await koneksi.query(
@@ -22,19 +22,19 @@ router.get("/user/:id", async function (req, res) {
     where orders.id_user = ${iduser} and status= '0'`
   );
   data = groupBy(data, "id_order");
+  let keranjang = [];
   orders.forEach((item, index, object) => {
     item["selected"] = true;
     if (data[item.id]) {
       item["orderdetail"] = data[item.id];
       item["nama_toko"] = data[item.id][0]["nama_toko"];
-    } else {
-      object.splice(index, 1);
+      keranjang.push(item);
     }
   });
 
   res.status(200).json({
     status: true,
-    data: orders,
+    data: keranjang,
   });
 });
 
@@ -71,6 +71,15 @@ router.get("/:id", async function (req, res, next) {
       data: [],
     });
   }
+});
+
+router.get("/orders/:id", async function (req, res) {
+  let sql = `SELECT order_detail.id,barang.nama, barang.foto_barang , order_detail.harga, order_detail.jumlah, COALESCE(varian.nama_varian,'') as varian, COALESCE(order_detail.keterangan,'') as keterangan from order_detail inner join barang on order_detail.id_barang = barang.id left join varian on varian.id = order_detail.id_varian where order_detail.id_order = $1`;
+  let data = await db.query(sql, [req.params.id]);
+  res.status(200).json({
+    status: true,
+    data: data,
+  });
 });
 
 //Masuk keranjang belum ada order pembayaran

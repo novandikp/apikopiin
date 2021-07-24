@@ -60,6 +60,24 @@ router.post("/", validate(), handlerInput, function (req, res) {
   });
 });
 
+router.put("/alamat/:id", async function (req, res) {
+  let id = req.params.id;
+  let sql = `update orders set id_alamat =$1 where id =  $2`;
+  koneksi
+    .none(sql, [req.body.id_alamat, id])
+    .then(() => {
+      res.status(200).json({
+        status: true,
+      });
+    })
+    .catch((e) => {
+      res.status(404).json({
+        status: false,
+        errorMessage: e,
+      });
+    });
+});
+
 //Ubah Status Order
 router.put("/:status/:id", function (req, res) {
   let status_code = "1";
@@ -120,12 +138,11 @@ router.put("/:id", validate(), handlerInput, async function (req, res) {
 
 router.delete("/:id", async function (req, res, next) {
   let id = req.params.id;
-  let sql = `DELETE FROM orders WHERE id=$1`;
+  let sql = `DELETE FROM order_detail WHERE id_order=$1;DELETE FROM orders WHERE id=$1;`;
   let data = [id];
   koneksi.any(sql, data);
   res.status(200).json({
     status: true,
-    data: exists[0],
   }); //
 });
 module.exports = router;
