@@ -11,7 +11,7 @@ const OrderDetail = require("../Controller/OrderDetail");
 const Auth = require("../Controller/Auth");
 const Dashboard = require("../Controller/Dashboard");
 const Shop = require("../Controller/Shop");
-
+const Postingan = require("../Controller/Postingan");
 function Route(app) {
   app.use("/user", User);
   app.use("/jenis", Jenis);
@@ -26,6 +26,7 @@ function Route(app) {
   app.use("/auth", Auth);
   app.use("/dashboard", Dashboard);
   app.use("/shop", Shop);
+  app.use("/postingan", Postingan);
 }
 
 module.exports = Route;

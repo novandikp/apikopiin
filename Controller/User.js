@@ -21,10 +21,12 @@ router.get("/", async function (req, res) {
 router.get("/:id", async function (req, res, next) {
   let id = req.params.id;
 
-  let data = await koneksi.query(
-    `SELECT users.id, foto_user, username, nama_lengkap,  email, no_telp  from users  where users.id = $1`,
-    [id]
-  );
+  let data = await koneksi
+    .query(
+      `SELECT users.id, foto_user, username, nama_lengkap,  email, no_telp  from users  where users.id = $1`,
+      [id]
+    )
+    .catch((e) => [console.warn(e)]);
 
   if (data.length == 1) {
     res.status(200).json({

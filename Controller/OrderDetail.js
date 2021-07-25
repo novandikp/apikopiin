@@ -192,7 +192,7 @@ router.post("/v2", async function (req, res) {
 router.delete("/:id", async function (req, res, next) {
   let id = req.params.id;
 
-  let sql = `DELETE FROM order_detail WHERE id=$1`;
+  let sql = `DELETE FROM order_detail WHERE id=$1;delete from orders where id not in  (SELECT order_detail.id_order from order_detail);`;
   let data = [id];
   koneksi.any(sql, data);
   res.status(200).json({
