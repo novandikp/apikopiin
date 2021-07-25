@@ -1,11 +1,11 @@
-var express = require("express");
-var router = express.Router();
-var koneksi = require("../Util/Database");
+var express = require("express")
+var router = express.Router()
+var koneksi = require("../Util/Database")
 
 //ambil toko
 router.get("/shop", async function (req, res) {
-  let data = [];
-  console.log(req.query);
+  let data = []
+
   // if (req.query.lat && req.query.long || true) {}
   try {
     data = await koneksi.query(
@@ -16,20 +16,20 @@ router.get("/shop", async function (req, res) {
         limit 10 
         `,
       [req.query.lat, req.query.long]
-    );
+    )
 
     res.status(200).json({
       status: true,
       data: data,
-    });
+    })
   } catch (e) {
     res.status(500).json({
       status: false,
       data: data,
       errorMessage: e.message,
-    });
+    })
   }
-});
+})
 
 router.get("/product", async function (req, res) {
   let data = await koneksi.query(
@@ -38,11 +38,11 @@ router.get("/product", async function (req, res) {
     from barang  inner join merchant ON barang.id_merchant = merchant.id
     inner join kategori ON barang.id_kategori = kategori.id
     inner join jenis_toko ON merchant.id_jenis = jenis_toko.id limit 12`
-  );
+  )
   res.status(200).json({
     status: true,
     data: data,
-  });
-});
+  })
+})
 
-module.exports = router;
+module.exports = router

@@ -62,7 +62,7 @@ router.get("/user/:id", async function (req, res, next) {
 router.post("/", validate(), handlerInput, async function (req, res) {
   let sql = `SELECT id from alamat where id_user = $1`
   let dataAlamat = await koneksi.query(sql, [req.body.id_user])
-  // console.log(req.body, dataAlamat)
+
   let flagdefault
   if (dataAlamat.length) {
     flagdefault = 0
@@ -89,7 +89,7 @@ router.post("/", validate(), handlerInput, async function (req, res) {
     req.body.alamat_map,
     flagdefault,
   ]
-  // console.log(data)
+
   koneksi
     .none(sql, data)
     .then((data) => {
@@ -138,8 +138,13 @@ router.put("/:id", validate(), handlerInput, async function (req, res) {
 // Set alamat default
 router.put("/default/:id", validate(), handlerInput, async function (req, res) {
   try {
-    await koneksi.none("UPDATE public.alamat set flagdefault=0 where id_user=$1", [req.body.id_user])
-    await koneksi.none(`UPDATE public.alamat set flagdefault=1 where id=$1`, [req.params.id])
+    await koneksi.none(
+      "UPDATE public.alamat set flagdefault=0 where id_user=$1",
+      [req.body.id_user]
+    )
+    await koneksi.none(`UPDATE public.alamat set flagdefault=1 where id=$1`, [
+      req.params.id,
+    ])
     res.status(200).json({
       status: true,
       data: req.body,
