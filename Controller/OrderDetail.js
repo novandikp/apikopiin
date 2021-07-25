@@ -87,12 +87,13 @@ router.post("/", validate(), handlerInput, async function (req, res) {
   let idorder;
   let user = req.body.id_user;
 
-  let sqlAlamat = "SELECT id from alamat where id_user=$1 order by id";
+  let sqlAlamat = "SELECT id from alamat where id_user=$1 and flagdefault=1 order by id";
   let dataAlamat = await db.query(sqlAlamat, [user]);
   if (dataAlamat.length == 0) {
-    res.status(404).json({
+    res.status(400).json({
       status: false,
-      errorMessage: "Pengguna tidak memiliki alamat pengiriman",
+      errorMessage: "Pengguna tidak memiliki alamat pengiriman, silakan menambahkan alamat terlebih dahulu.",
+      code: 'NO_ADDRESS'
     });
   } else {
     let merchant = req.body.id_merchant;
