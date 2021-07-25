@@ -32,13 +32,18 @@ router.post("/foto/:id", upload.single("foto_postingan"), function (req, res) {
 });
 
 router.post("/like/:id", function (req, res) {
-  let sql =
-    "INSERT INTO likepostingan  (id_postingan,id_user) values ($1,$2) RETURNING ID";
-  db.one(sql, [req.params.id, req.body.id_user])
+  let sql;
+
+  if (req.body.liked == "true") {
+    sql = "INSERT INTO likepostingan  (id_postingan,id_user) values ($1,$2)";
+  } else {
+    sql = "DELETE FROM likepostingan  where id_postingan = $1 and id_user=$2";
+  }
+
+  db.none(sql, [req.params.id, req.body.id_user])
     .then((data) => {
       res.status(200).json({
         status: true,
-        id: data.id,
       });
     })
     .catch((e) => {
@@ -74,7 +79,7 @@ router.get("/", async function (req, res) {
   if (req.query.offset) {
     offset = req.query.offset;
   }
-  let sql = `SELECT postingan.id, foto_user, foto_barang, postingan.id_user, id_barang, postingan, foto_postingan, barang.nama, barang.harga, nama_lengkap, COALESCE(T.count,0) as liked, COALESCE(T.count,0) as like from postingan inner join users on users.id = postingan.id_user left join barang on barang.id = postingan.id_barang left join (SELECT count(id) as count,id_postingan from likepostingan where id_user=$1 group by id_postingan) T on T.id_postingan = postingan.id left join (SELECT count(id) as count,id_postingan from likepostingan group by id_postingan) B on B.id_postingan = postingan.id  limit ${limit} offset ${offset}`;
+  let sql = `SELECT postingan.id, tglpostingan, foto_user, foto_barang, postingan.id_user, id_barang, postingan, foto_postingan, barang.nama, barang.harga, nama_lengkap, COALESCE(T.count,0) as liked, COALESCE(T.count,0) as like from postingan inner join users on users.id = postingan.id_user left join barang on barang.id = postingan.id_barang left join (SELECT count(id) as count,id_postingan from likepostingan where id_user=$1 group by id_postingan) T on T.id_postingan = postingan.id left join (SELECT count(id) as count,id_postingan from likepostingan group by id_postingan) B on B.id_postingan = postingan.id  order by tglpostingan desc,postingan.id desc limit ${limit} offset ${offset}`;
   let data = await koneksi.query(sql, [iduser]);
   res.status(200).json({
     status: true,
