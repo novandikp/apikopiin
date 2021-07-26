@@ -17,7 +17,15 @@ router.get("/", async function (req, res) {
   if (req.query.orderby) {
     order = req.query.orderby
   }
+  let sort = "ASC"
+  if (req.query.sort) {
+    sort = req.query.sort
+  }
 
+  let rating = 0
+  if (req.query.rating) {
+    rating = parseInt(req.query.rating)
+  }
   let limit = "10"
   let offset = "0"
   if (req.query.limit) {
@@ -27,14 +35,19 @@ router.get("/", async function (req, res) {
     offset = req.query.offset
   }
 
+  let kategori = ""
+  if (req.query.kategori) {
+    kategori = "AND id_kategori = " + req.query.kategori
+  }
+
   let data = await koneksi.query(
     `SELECT barang.id, foto_barang, id_merchant, id_kategori, nama, barang.deskripsi, barang.harga, berat, stok,  nama_toko, jenis_toko.jenis, COALESCE(T.rating,0) as rating 
     from barang  inner join merchant ON barang.id_merchant = merchant.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON merchant.id_jenis = jenis_toko.id LEFT join (SELECT id_barang, ROUND(avg(rating),1) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id
-    where nama ILIKE '%${cari}%' OR 
+    where COALESCE(T.rating,0) >= ${rating} ${kategori}  and (nama ILIKE '%${cari}%' OR 
     deskripsi  ILIKE '%${cari}%' OR
-    nama_toko  ILIKE '%${cari}%'  ORDER BY ` +
+    nama_toko  ILIKE '%${cari}%') ORDER BY ` +
       order +
-      ` limit ${limit} offset ${offset}`
+      ` ${sort} limit ${limit} offset ${offset}`
   )
   res.status(200).json({
     status: true,
