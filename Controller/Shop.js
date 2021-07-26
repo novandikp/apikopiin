@@ -20,6 +20,11 @@ router.get("/", async function (req, res) {
     offset = req.query.offset
   }
 
+  let jenis = ""
+  if (req.query.jenis) {
+    jenis = " AND id_jenis=" + req.query.jenis
+  }
+
   let order = "nama_toko"
   if (req.query.orderby) {
     order = req.query.orderby
@@ -31,9 +36,9 @@ router.get("/", async function (req, res) {
       `SELECT merchant.id,nama_toko, jenis_toko.jenis ,provinsi, kota, kecamatan,kodepos, alamat_toko, foto_merchant,
       ( 3959 * acos( cos( radians($1) ) * cos( radians( lat_toko) ) * cos( radians( long_toko ) - radians($2) ) + sin( radians($1) ) * sin( radians( lat_toko ) ) ) ) AS distance 
       from merchant inner join jenis_toko on jenis_toko.id = merchant.id_jenis 
-        where nama_toko ilike '%${cari}%' or
-        alamat_toko ilike '%${cari}%'
-        order by distance, ${order}
+        where (nama_toko ilike '%${cari}%' or
+        alamat_toko ilike '%${cari}%') ${jenis}
+        order by  ${order}
         limit ${limit} offset ${offset}
         `,
       [req.query.lat, req.query.long]
