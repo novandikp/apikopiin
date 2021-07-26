@@ -171,6 +171,12 @@ router.post("/shop/:id", async function (req, res) {
       iduser,
     ]);
 
+    // Insert Data Kurir
+    db.none(
+      "INSERT INTO kurirtoko(id_merchant,kodekurir) VALUES( $1, $2), ( $1, $3), ( $1, $4), ( $1, $5)",
+      [datauser.id, "gojek", "grab", "sicepat", "wahana"]
+    )
+
     req.body.id_merchant = datauser.id;
     res.status(200).json({
       status: true,
