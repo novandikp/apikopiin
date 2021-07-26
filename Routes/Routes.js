@@ -13,6 +13,8 @@ const Dashboard = require("../Controller/Dashboard")
 const Shop = require("../Controller/Shop")
 const Postingan = require("../Controller/Postingan")
 const Kurir = require("../Controller/Kurir")
+const Engine = require("../Controller/Engine")
+
 function Route(app) {
   app.use("/user", User)
   app.use("/jenis", Jenis)
@@ -29,6 +31,7 @@ function Route(app) {
   app.use("/shop", Shop)
   app.use("/postingan", Postingan)
   app.use("/kurir", Kurir)
+  app.use("/engine", Engine)
 }
 
 module.exports = Route
