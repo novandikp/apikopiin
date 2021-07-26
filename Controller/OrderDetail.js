@@ -30,16 +30,25 @@ router.get("/user/:id", async function (req, res) {
       inner join merchant on barang.id_merchant = merchant.id
       where orders.id_user = ${iduser} and status= '0'`
     )
+
+    
     data = groupBy(data, "id_order")
     let keranjang = []
-    orders.forEach((item, index, object) => {
+
+    for (let i=0;i<orders.length;i++) {
+      const item = orders[i]
       item["selected"] = true
       if (data[item.id]) {
         item["orderdetail"] = data[item.id]
         item["nama_toko"] = data[item.id][0]["nama_toko"]
+        let dataKurir = await koneksi.query(
+          `SELECT kodekurir FROM kurirtoko where id_merchant=$1`,
+          [item.id]
+        )
+        item['kurir'] = dataKurir
         keranjang.push(item)
       }
-    })
+    }
 
     res.status(200).json({
       status: true,
