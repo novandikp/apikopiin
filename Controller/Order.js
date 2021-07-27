@@ -194,6 +194,71 @@ router.put("/alamat/:id", async function (req, res) {
     })
 })
 
+// Generate Faktur
+router.put("/generate", async function (req, res) {
+  let body = req.body;
+  const {cartData} = req.body;
+  // console.log('cartData',cartData)
+  // return
+
+  try {
+    let reference_id
+    for (let i = 0; i < cartData.length; i++) {
+      const  {id,shipping: {courier_code,courier_service_code}, metode_pembayaran} = cartData[i];
+      let kurirKode = `${courier_code}/${courier_service_code}`
+      let {nofaktur} = await koneksi.one(`select
+      (
+          'PJ' || extract(
+              year
+              from
+                  now()
+          ) || extract(
+              month
+              from
+                  now()
+          ) || extract(
+              day
+              from
+                  now()
+          ) || (
+              select
+                  case
+                      when faktur is null then '0001'
+                      else substring(faktur, 10, 3) || (substring(faktur, 13, 1)::int + 1)
+                  end
+              from
+                  (
+                      select
+                          max(no_faktur) as faktur
+                      from
+                          orders
+                      where
+                          tgl_order >= current_date and id != ${id}
+                  ) t
+          )
+      ) as nofaktur;`)
+      if (i == 0) reference_id = nofaktur
+      await koneksi.none(`UPDATE orders SET kurir='${kurirKode}', no_faktur='${nofaktur}', metode_pembayaran='${metode_pembayaran}', tgl_order=CURRENT_DATE  WHERE id=${id}`);
+    } 
+
+    // console.log({
+    //   status: true,
+    //   reference_id: reference_id
+    // })
+    res.status(200).json({
+      status: true,
+      reference_id: reference_id
+    });
+  } catch (e) {
+    console.log(e)
+    res.status(500).json({
+      status: false,
+      errorMessage: e.error
+    });
+  }
+
+});
+
 //Ubah Status Order
 router.put("/:status/:id", function (req, res) {
   let status_code = "1"
