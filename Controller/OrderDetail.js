@@ -31,11 +31,10 @@ router.get("/user/:id", async function (req, res) {
       where orders.id_user = ${iduser} and status= '0'`
     )
 
-    
     data = groupBy(data, "id_order")
     let keranjang = []
 
-    for (let i=0;i<orders.length;i++) {
+    for (let i = 0; i < orders.length; i++) {
       const item = orders[i]
       item["selected"] = true
       if (data[item.id]) {
@@ -45,7 +44,7 @@ router.get("/user/:id", async function (req, res) {
           `SELECT kodekurir FROM kurirtoko where id_merchant=$1`,
           [item.id]
         )
-        item['kurir'] = dataKurir
+        item["kurir"] = dataKurir
         keranjang.push(item)
       }
     }
@@ -96,11 +95,17 @@ router.get("/:id", async function (req, res, next) {
 })
 
 router.get("/orders/:id", async function (req, res) {
-  let sql = `SELECT order_detail.id,barang.nama, barang.foto_barang , order_detail.harga, order_detail.jumlah, COALESCE(varian.nama_varian,'') as varian, COALESCE(order_detail.keterangan,'') as keterangan from order_detail inner join barang on order_detail.id_barang = barang.id left join varian on varian.id = order_detail.id_varian where order_detail.id_order = $1`
+  let sqlorder = `SELECT orders.status, orders.tgl_order, orders.no_faktur, orders.kurir, orders.no_resi, alamat.nama, nama_lengkap, alamat.no_telp, 
+  alamat.detail,alamat.provinsi, alamat.kota, alamat.kecamatan , orders.metode_pembayaran from orders INNER join alamat on  orders.id_alamat
+  = alamat.id inner join users on users.id = orders.id_user where orders.id = $1`
+  let order = await db.one(sqlorder, [req.params.id])
+
+  let sql = `SELECT order_detail.id,barang.nama, nama_toko, barang.foto_barang , order_detail.harga, order_detail.jumlah, berat, COALESCE(varian.nama_varian,'-') as varian, COALESCE(order_detail.keterangan,'-') as keterangan from order_detail inner join barang on order_detail.id_barang = barang.id left join varian on varian.id = order_detail.id_varian inner join merchant on merchant.id = barang.id where order_detail.id_order = $1`
   let data = await db.query(sql, [req.params.id])
+  order["detailorder"] = data
   res.status(200).json({
     status: true,
-    data: data,
+    data: order,
   })
 })
 
@@ -127,22 +132,22 @@ router.post("/", validate(), handlerInput, async function (req, res) {
     } else {
       varian = "id_varian = " + req.body.id_varian
     }
-    let sqlorderdetail = `select order_detail.id from order_detail inner join orders on orders.id = order_detail.id_order where id_barang ='${req.body.id_barang}' and ${varian} AND status='0'`
+    let sqlorder = `SELECT orders.id FROM order_detail inner join orders on orders.id = order_detail.id_order inner join barang on barang.id = order_detail.id_barang WHERE id_merchant=${merchant} AND id_user=${user} AND status='0'`
+
+    let order = await db.query(sqlorder)
+    if (order.length == 0) {
+      let idorder = await db.one(
+        "INSERT INTO orders (id_user,status,id_alamat) VALUES ($1,$2,$3) RETURNING ID;",
+        [user, "0", dataAlamat[0].id]
+      )
+      req.body.id_order = idorder.id
+    } else {
+      req.body.id_order = order[0].id
+    }
+    let sqlorderdetail = `select order_detail.id from order_detail inner join orders on orders.id = order_detail.id_order where id_barang ='${req.body.id_barang}' and ${varian} AND status='0' and id_order='${req.body.id_order}'`
 
     let detail = await db.query(sqlorderdetail)
     if (detail.length == 0) {
-      let sqlorder = `SELECT orders.id FROM order_detail inner join orders on orders.id = order_detail.id_order inner join barang on barang.id = order_detail.id_barang WHERE id_merchant=${merchant} AND id_user=${user} AND status='0'`
-      console.log(sqlorder)
-      let order = await db.query(sqlorder)
-      if (order.length == 0) {
-        let idorder = await db.one(
-          "INSERT INTO orders (id_user,status,id_alamat) VALUES ($1,$2,$3) RETURNING ID;",
-          [user, "0", dataAlamat[0].id]
-        )
-        req.body.id_order = idorder.id
-      } else {
-        req.body.id_order = order[0].id
-      }
       let sql = `INSERT INTO public.order_detail(
       id_order, id_barang, id_varian, harga, jumlah, keterangan)
       VALUES ( $1, $2, $3, $4, $5, $6);`
