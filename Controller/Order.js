@@ -86,17 +86,11 @@ router.get("/user/:id", async function (req, res, next) {
      where ${columnStatus} (no_faktur ilike '%${cari}%' or nama_toko ilike '%${cari}%') and id_user=${id} and tgl_order between '${tglAwal}' and '${tglAkhir}' limit ${limit} offset ${offset}`,
     [statusData]
   )
-  if (data.length == 1) {
-    res.status(200).json({
-      status: true,
-      data: data,
-    })
-  } else {
-    res.status(200).json({
-      status: false,
-      data: [],
-    })
-  }
+
+  res.status(200).json({
+    status: true,
+    data: data,
+  })
 })
 
 // Get by merchant
@@ -144,17 +138,10 @@ router.get("/shop/:id", async function (req, res, next) {
      where ${columnStatus} (no_faktur ilike '%${cari}%' or nama_lengkap ilike '%${cari}%') and merchant.id=${id} and tgl_order between '${tglAwal}' and '${tglAkhir}' limit ${limit} offset ${offset}`,
     [statusData]
   )
-  if (data.length == 1) {
-    res.status(200).json({
-      status: true,
-      data: data,
-    })
-  } else {
-    res.status(200).json({
-      status: false,
-      data: [],
-    })
-  }
+  res.status(200).json({
+    status: true,
+    data: data,
+  })
 })
 
 //INSERT
@@ -473,7 +460,7 @@ router.delete("/:id", async function (req, res, next) {
 router.post("/ewallet-webhook", async (req, res, next) => {
   // console.log(req.body)
   const { reference_id, status, charge_amount, channel_code } = req.body.data
-  if (status != "SUCCEEDED" || reference_id == 'test-payload') {
+  if (status != "SUCCEEDED" || reference_id == "test-payload") {
     // console.log('masuk sini')
     return res.status(200).json({
       status: true,
