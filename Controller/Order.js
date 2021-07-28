@@ -196,17 +196,21 @@ router.put("/alamat/:id", async function (req, res) {
 
 // Generate Faktur
 router.put("/generate", async function (req, res) {
-  let body = req.body;
-  const {cartData} = req.body;
+  let body = req.body
+  const { cartData } = req.body
   // console.log('cartData',cartData)
   // return
 
   try {
     let reference_id
     for (let i = 0; i < cartData.length; i++) {
-      const  {id,shipping: {courier_code,courier_service_code}, metode_pembayaran} = cartData[i];
+      const {
+        id,
+        shipping: { courier_code, courier_service_code },
+        metode_pembayaran,
+      } = cartData[i]
       let kurirKode = `${courier_code}/${courier_service_code}`
-      let {nofaktur} = await koneksi.one(`select
+      let { nofaktur } = await koneksi.one(`select
       (
           'PJ' || extract(
               year
@@ -238,8 +242,10 @@ router.put("/generate", async function (req, res) {
           )
       ) as nofaktur;`)
       if (i == 0) reference_id = nofaktur
-      await koneksi.none(`UPDATE orders SET kurir='${kurirKode}', no_faktur='${nofaktur}', metode_pembayaran='${metode_pembayaran}', tgl_order=CURRENT_DATE  WHERE id=${id}`);
-    } 
+      await koneksi.none(
+        `UPDATE orders SET kurir='${kurirKode}', no_faktur='${nofaktur}', metode_pembayaran='${metode_pembayaran}', tgl_order=CURRENT_DATE  WHERE id=${id}`
+      )
+    }
 
     // console.log({
     //   status: true,
@@ -247,17 +253,16 @@ router.put("/generate", async function (req, res) {
     // })
     res.status(200).json({
       status: true,
-      reference_id: reference_id
-    });
+      reference_id: reference_id,
+    })
   } catch (e) {
     console.log(e)
     res.status(500).json({
       status: false,
-      errorMessage: e.error
-    });
+      errorMessage: e.error,
+    })
   }
-
-});
+})
 
 //Ubah Status Order
 router.put("/:status/:id", function (req, res) {
@@ -326,4 +331,33 @@ router.delete("/:id", async function (req, res, next) {
     status: true,
   }) //
 })
+
+router.post("/ewallet-webhook", async (req, res, next) => {
+  console.log(req.body)
+  const { reference_id, status } = req.body.data
+  if (status != "SUCCEEDED") {
+    // console.log('masuk sini')
+    return res.status(200).json({
+      status: true,
+    })
+  }
+  try {
+    console.log("test gan")
+    res.status(200).json({
+      status: true,
+    })
+  } catch (e) {
+    console.log(e)
+    res.status(500).json({
+      status: false,
+      message: "Terjadi kesalahan",
+      errorMessage: JSON.stringify(e),
+    })
+  }
+})
+
+router.get("/redirect", async (req, res, next) => {
+  res.status(200).json({ status: true })
+})
+
 module.exports = router
