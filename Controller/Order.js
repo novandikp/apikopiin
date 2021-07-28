@@ -248,6 +248,14 @@ router.put("/generate", async function (req, res) {
         `UPDATE orders SET kurir='${kurirKode}', no_faktur='${nofaktur}', metode_pembayaran='${metode_pembayaran}', tgl_order=CURRENT_DATE  WHERE id=${id}`
       )
     }
+    let lastIndex = cartData.length - 1
+    let ids = [...cartData].reduce(
+      (prev, itemCart, index) => `${prev.id},${itemCart.id}`
+    )
+    console.log(ids)
+    await koneksi.none(
+      `UpdATE orders SET reference_id='${reference_id}' WHERE id IN (${ids})`
+    )
 
     // console.log({
     //   status: true,
@@ -463,20 +471,65 @@ router.delete("/:id", async function (req, res, next) {
 })
 
 router.post("/ewallet-webhook", async (req, res, next) => {
-  console.log(req.body)
-  const { reference_id, status } = req.body.data
-  if (status != "SUCCEEDED") {
+  // console.log(req.body)
+  const { reference_id, status, charge_amount, channel_code } = req.body.data
+  if (status != "SUCCEEDED" || reference_id == 'test-payload') {
     // console.log('masuk sini')
     return res.status(200).json({
       status: true,
     })
   }
   try {
-    console.log("test gan")
+    await koneksi.none("BEGIN")
+    await koneksi.none(
+      `UPDATE orders set status=1 WHERE reference_id='${reference_id}'`
+    )
+
+    let { fakturjurnal } = await koneksi.one(`select
+    (
+        'JL' || extract(
+            year
+            from
+                now()
+        ) || extract(
+            month
+            from
+                now()
+        ) || extract(
+            day
+            from
+                now()
+        ) || (
+            select
+                case
+                    when faktur is null then '0001'
+                    else substring(faktur, 10, 3) || (substring(faktur, 13, 1) :: int + 1)
+                end
+            from
+                (
+                    select
+                        max(no_faktur) as faktur
+                    from
+                        jurnal j2
+                    where
+                        tglcreate >= current_date
+                ) t
+        )
+    ) as fakturjurnal`)
+    let { id } =
+      await koneksi.one(`INSERT INTO public.jurnal (no_faktur, keterangan)
+                      VALUES('${fakturjurnal}', 'Pembayaran E-Wallet Reference ID : ${reference_id}') RETURNING id;`)
+    await koneksi.none(
+      `INSERT INTO public.jurnal_detail (id_jurnal, uid, userver, debit, kredit) VALUES(${id}, 0, 0, ${charge_amount}, 0);`
+    )
+    await koneksi.none(`COMMIT`)
+
     res.status(200).json({
       status: true,
+      message: "Berhasil Update",
     })
   } catch (e) {
+    await koneksi.none("ROLLBACK")
     console.log(e)
     res.status(500).json({
       status: false,

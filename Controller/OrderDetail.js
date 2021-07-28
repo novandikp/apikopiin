@@ -173,7 +173,7 @@ router.post("/", validate(), handlerInput, async function (req, res) {
       })
     }
   } catch (e) {
-    console.log(e)
+    console.log('error tambah kernajang', e)
     res.status(500).json({
       status: true,
       data: req.body,
