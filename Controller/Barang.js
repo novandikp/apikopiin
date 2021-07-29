@@ -163,6 +163,7 @@ router.post("/", validate(), handlerInput, async function (req, res) {
       })
     })
     .catch((e) => {
+      console.log(e)
       res.status(406).json({
         status: true,
         errorMessage: e,

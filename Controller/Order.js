@@ -1,12 +1,16 @@
 var express = require("express")
-var axios = require("axios")
+const axios = require("axios")
 const db = require("../Util/Database")
 var router = express.Router()
 var koneksi = require("../Util/Database")
 const handlerInput = require("../Util/ValidationHandler")
 const validate = require("../Validation/OrderValidation")
 const moment = require("moment")
+require("dotenv").config()
 
+const { ONESIGNAL_API_KEY_BASE64, ONESIGNAL_APPID } = process.env
+// console.log({ONESIGNAL_API_KEY, ONESIGNAL_APPID})
+const BASE_ONESIGNAL = "https://onesignal.com/api/v1"
 //GET
 router.get("/", async function (req, res) {
   let data = await koneksi.query(
@@ -196,7 +200,7 @@ router.put("/alamat/:id", async function (req, res) {
 router.put("/generate", async function (req, res) {
   let body = req.body
   const { cartData } = req.body
-  // console.log('cartData',cartData)
+  // console.log("cartData", cartData)
   // return
 
   try {
@@ -245,10 +249,11 @@ router.put("/generate", async function (req, res) {
       )
     }
     let lastIndex = cartData.length - 1
-    let ids = [...cartData].reduce(
-      (prev, itemCart, index) => `${prev.id},${itemCart.id}`
-    )
-    console.log(ids)
+    // Reduce, jika array isinya 1 item reduce ndak work
+    let ids = (
+      cartData.length == 1 ? [...cartData, ...cartData] : cartData
+    ).reduce((prev, itemCart, index) => `${prev.id},${itemCart.id}`)
+    // console.log("ids", ids)
     await koneksi.none(
       `UpdATE orders SET reference_id='${reference_id}' WHERE id IN (${ids})`
     )
@@ -467,7 +472,7 @@ router.delete("/:id", async function (req, res, next) {
 })
 
 router.post("/ewallet-webhook", async (req, res, next) => {
-  // console.log(req.body)
+  console.log(req.body)
   const { reference_id, status, charge_amount, channel_code } = req.body.data
   if (status != "SUCCEEDED" || reference_id == "test-payload") {
     // console.log('masuk sini')
@@ -518,7 +523,48 @@ router.post("/ewallet-webhook", async (req, res, next) => {
     await koneksi.none(
       `INSERT INTO public.jurnal_detail (id_jurnal, uid, userver, debit, kredit) VALUES(${id}, 0, 0, ${charge_amount}, 0);`
     )
-    await koneksi.none(`COMMIT`)
+    // await koneksi.none(`COMMIT`)
+
+    let dataOrder =
+      await koneksi.query(`SELECT o.id as idorder,no_faktur,id_user,u.nama_lengkap, (select b2.id_merchant from order_detail od
+                            inner join barang b2 on b2.id=od.id_barang where od.id_order = o.id limit 1) as id_merchant
+                            FROM orders o inner join users u on u.id=o.id_user 
+                            WHeRE reference_id='${reference_id}'`)
+    for (let i = 0; i < dataOrder.length; i++) {
+      const itemOrder = dataOrder[i]
+      let deviceids = await koneksi.query(
+        `SELECT deviceid FROM merchant_log WHERE id_merchant=${itemOrder.id_merchant} and flaglogin=1`
+      )
+      // Jika ndak ada deviceid, skip biar ndak error
+      if (!deviceids.length) continue
+      // Kirim notifikasi onesignal
+      let dataNotif = {
+        app_id: ONESIGNAL_APPID,
+        include_player_ids: deviceids.map((item) => item.deviceid),
+        // 'included_segments' : {'All'},
+        data: {
+          params: {
+            idorder: itemOrder.idorder,
+          },
+          tujuan: "DetailTransaksi",
+        },
+        headings: { en: "Pesanan Baru" },
+        contents: {
+          en: `Ada pesanan baru ${itemOrder.no_faktur} dari ${itemOrder.nama_lengkap}`,
+        },
+        small_icon: "https://apikopi.herokuapp.com/image/app/logoapp.png",
+        large_icon: "https://apikopi.herokuapp.com/image/app/logoapp.png",
+      }
+      console.log(dataNotif)
+      axios.post(`${BASE_ONESIGNAL}/notifications`, dataNotif, {
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          Authorization: `Basic ${ONESIGNAL_API_KEY_BASE64}`,
+        },
+      }).catch(e => {
+        console.log('error onesignal', e.response? e.response.data : e.message)
+      })
+    }
 
     res.status(200).json({
       status: true,
