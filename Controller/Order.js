@@ -613,7 +613,7 @@ router.put("/tolak/:id", async function (req, res) {
 
 router.put("/siapantar/:id", async function (req, res) {
   let sqlorder =
-    "SELECT orders.no_faktur, id_order_biteship from orders where orders.id=$1"
+    "SELECT id_user,orders.no_faktur, id_order_biteship from orders where orders.id=$1"
   let dataOrder = await koneksi.one(sqlorder, [req.params.id])
 
   // res.json(dataBody)
@@ -631,53 +631,107 @@ router.put("/siapantar/:id", async function (req, res) {
         },
       }
     )
-    .then(({ data }) => {
-      koneksi
-        .none("UPDATE orders set status = 4 where orders.id=$1", [
+    .then(async ({ data }) => {
+      try {
+        await koneksi.none("UPDATE orders set status = 4 where orders.id=$1", [
           req.params.id,
         ])
-        .catch((e) => {
-          console.log(e)
+        let deviceids = await koneksi.query(
+          `SELECT deviceid FROM user_log WHERE id_user=${dataOrder.id_user} and flaglogin=1`
+        )
+        // Jika ndak ada deviceid, skip biar ndak error
+        if (deviceids.length) {
+          sendNotification({
+            heading: "Pesanan Siap Diantar",
+            content: `Pesanan Anda ${dataOrder.no_faktur} siap diantar ke alamat tujuan.`,
+            player_ids: deviceids.map((item) => item.deviceid),
+            additionalData: {
+              params: {
+                idorder: req.params.id,
+              },
+              tujuan: "DetailTransaksi",
+            },
+          }).catch((e) => {
+            console.log("eror send notif pesanan siap diantar", e)
+          })
+        }
+        res.status(200).json({
+          status: true,
+          msg: "Data berhasil dimasukkan",
         })
-      res.status(200).json({
-        status: true,
-        msg: "Data berhasil dimasukkan",
-      })
+      } catch (e) {
+        console.log("eror siap diantar", e)
+        res.status(500).json({
+          status: false,
+          errorMessage: "Data gagal dimasukkan",
+        })
+      }
     })
 
     .catch((e) => {
-      console.log(e.response)
+      console.log("eror siap diantar", e.response)
       res.status(500).json({
         status: false,
-        errorMessage: "Dara gagal dimasukkan",
+        errorMessage: "Data gagal dimasukkan",
       })
     })
 })
 
-router.post("/biteship", function (req, res) {
+router.post("/biteship", async function (req, res) {
   let order_id = req.body.order_id
   let status = req.body.status
   // let status_code = "1"
   // let status = req.params.status
+  try {
+    let heading, content
+    let dataOrder =
+      await koneksi.one(`SELECT id,no_faktur,u.id as id_user FROM orders o where id_order_biteship='${order_id}'
+                    INNER JOIN users u on u.id=o.id_user`)
+    if (status == "dropping_off") {
+      await koneksi.none(
+        "update orders set status = 5 where id_order_biteship = '" +
+          order_id +
+          "'"
+      )
+      heading = "Pesanan Sedang Diantar"
+      content = `Pesanan Anda ${dataOrder.no_faktur} sedang diantar ke alamat tujuan..`
+    } else if (status == "delivered") {
+      await koneksi.none(
+        "update orders set status = 7  where id_order_biteship = '" +
+          order_id +
+          "'"
+      )
+      heading = "Pesanan Sudah Diantar"
+      content = `Pesanan Anda ${dataOrder.no_faktur} sudah sampai di alamat tujuan. Silakan konfirmasi pesanan sudah selesai.`
+    }
 
-  if (status == "dropping_off") {
-    koneksi.none(
-      "update orders set status = 6  where id_order_biteship = '" +
-        order_id +
-        "'"
+    let deviceids = await koneksi.query(
+      `SELECT deviceid FROM user_log WHERE id_user=${dataOrder.id_user} and flaglogin=1`
     )
-  } else if (status == "delivered") {
-    koneksi.none(
-      "update orders set status = 7  where id_order_biteship = '" +
-        order_id +
-        "'"
-    )
+    // Jika ndak ada deviceid, skip biar ndak error
+    if (deviceids.length) {
+      sendNotification({
+        heading: heading,
+        content: content,
+        player_ids: deviceids.map((item) => item.deviceid),
+        additionalData: {
+          params: {
+            idorder: req.params.id,
+          },
+          tujuan: "DetailTransaksi",
+        },
+      })
+    }
+
+    res.status(200).json({
+      status: true,
+    })
+  } catch (e) {
+    console.log("error webhook", e)
+    res.status(500).json({
+      status: true,
+    })
   }
-
-  res.status(200).json({
-    status: true,
-  })
-  return
 
   // }
 })
