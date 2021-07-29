@@ -14,7 +14,7 @@ const Shop = require("../Controller/Shop")
 const Postingan = require("../Controller/Postingan")
 const Kurir = require("../Controller/Kurir")
 const Engine = require("../Controller/Engine")
-
+const Jurnal = require("../Controller/Jurnal")
 function Route(app) {
   app.use("/user", User)
   app.use("/jenis", Jenis)
@@ -32,6 +32,7 @@ function Route(app) {
   app.use("/postingan", Postingan)
   app.use("/kurir", Kurir)
   app.use("/engine", Engine)
+  app.use("/jurnal", Jurnal)
 }
 
 module.exports = Route
