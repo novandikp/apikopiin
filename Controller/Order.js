@@ -1,12 +1,17 @@
 var express = require("express")
-var axios = require("axios")
+const axios = require("axios")
 const db = require("../Util/Database")
 var router = express.Router()
 var koneksi = require("../Util/Database")
 const handlerInput = require("../Util/ValidationHandler")
 const validate = require("../Validation/OrderValidation")
 const moment = require("moment")
+const { sendNotification } = require("../Util/Function")
+require("dotenv").config()
 
+const { ONESIGNAL_API_KEY_BASE64, ONESIGNAL_APPID } = process.env
+// console.log({ONESIGNAL_API_KEY, ONESIGNAL_APPID})
+const BASE_ONESIGNAL = "https://onesignal.com/api/v1"
 //GET
 router.get("/", async function (req, res) {
   let data = await koneksi.query(
@@ -196,7 +201,7 @@ router.put("/alamat/:id", async function (req, res) {
 router.put("/generate", async function (req, res) {
   let body = req.body
   const { cartData } = req.body
-  // console.log('cartData',cartData)
+  // console.log("cartData", cartData)
   // return
 
   try {
@@ -245,10 +250,11 @@ router.put("/generate", async function (req, res) {
       )
     }
     let lastIndex = cartData.length - 1
-    let ids = [...cartData].reduce(
-      (prev, itemCart, index) => `${prev.id},${itemCart.id}`
-    )
-    console.log(ids)
+    // Reduce, jika array isinya 1 item reduce ndak work
+    let ids = (
+      cartData.length == 1 ? [...cartData, ...cartData] : cartData
+    ).reduce((prev, itemCart, index) => `${prev.id},${itemCart.id}`)
+    // console.log("ids", ids)
     await koneksi.none(
       `UpdATE orders SET reference_id='${reference_id}' WHERE id IN (${ids})`
     )
@@ -272,7 +278,7 @@ router.put("/generate", async function (req, res) {
 
 router.put("/terima/:id", async function (req, res) {
   let sqlorder =
-    "SELECT orders.no_faktur, kurir,alamat.nama,alamat.latitude, alamat.longitude, alamat.detail, alamat.provinsi, alamat.kota,alamat.kecamatan,alamat.no_telp from orders inner join alamat on alamat.id =orders.id_alamat where orders.id=$1"
+    "SELECT orders.id_user,orders.no_faktur, kurir,alamat.nama,alamat.latitude, alamat.longitude, alamat.detail, alamat.provinsi, alamat.kota,alamat.kecamatan,alamat.no_telp from orders inner join alamat on alamat.id =orders.id_alamat where orders.id=$1"
   let sqldetail =
     "SELECT barang.nama from order_detail inner join barang on order_detail.id_barang= barang.id  where id_order=$1"
   let sqlmerchant =
@@ -338,7 +344,7 @@ router.put("/terima/:id", async function (req, res) {
         "Content-Type": "application/json",
       },
     })
-    .then(({ data }) => {
+    .then(async ({ data }) => {
       koneksi
         .none(
           "UPDATE orders set status = 3, id_order_biteship=$1 where orders.id=$2",
@@ -347,6 +353,24 @@ router.put("/terima/:id", async function (req, res) {
         .catch((e) => {
           console.log(e)
         })
+
+        let deviceids = await koneksi.query(
+          `SELECT deviceid FROM user_log WHERE id_user=${dataOrder.id_user} and flaglogin=1`
+        )
+        // Jika ndak ada deviceid, skip biar ndak error
+        if (deviceids.length){
+          sendNotification({
+            heading: "Pesanan Sedang Diproses",
+            content: `Pesanan Anda ${dataOrder.no_faktur} diterima oleh ${dataMerchant.nama_toko}.`,
+            player_ids: deviceids.map((item) => item.deviceid),
+            additionalData: {
+              params: {
+                idorder: req.params.id,
+              },
+              tujuan: "DetailTransaksi",
+            }
+          })
+        }
       res.status(200).json({
         status: true,
         msg: "Dara berhasil dimasukkan",
@@ -467,7 +491,7 @@ router.delete("/:id", async function (req, res, next) {
 })
 
 router.post("/ewallet-webhook", async (req, res, next) => {
-  // console.log(req.body)
+  console.log(req.body)
   const { reference_id, status, charge_amount, channel_code } = req.body.data
   if (status != "SUCCEEDED" || reference_id == "test-payload") {
     // console.log('masuk sini')
@@ -518,7 +542,33 @@ router.post("/ewallet-webhook", async (req, res, next) => {
     await koneksi.none(
       `INSERT INTO public.jurnal_detail (id_jurnal, uid, userver, debit, kredit) VALUES(${id}, 0, 0, ${charge_amount}, 0);`
     )
-    await koneksi.none(`COMMIT`)
+    // await koneksi.none(`COMMIT`)
+
+    let dataOrder =
+      await koneksi.query(`SELECT o.id as idorder,no_faktur,id_user,u.nama_lengkap, (select b2.id_merchant from order_detail od
+                            inner join barang b2 on b2.id=od.id_barang where od.id_order = o.id limit 1) as id_merchant
+                            FROM orders o inner join users u on u.id=o.id_user 
+                            WHeRE reference_id='${reference_id}'`)
+    for (let i = 0; i < dataOrder.length; i++) {
+      const itemOrder = dataOrder[i]
+      let deviceids = await koneksi.query(
+        `SELECT deviceid FROM merchant_log WHERE id_merchant=${itemOrder.id_merchant} and flaglogin=1`
+      )
+      // Jika ndak ada deviceid, skip biar ndak error
+      if (!deviceids.length) continue
+
+      sendNotification({
+        heading: "Pesanan Baru",
+        content: `Ada pesanan baru ${itemOrder.no_faktur} dari ${itemOrder.nama_lengkap}`,
+        player_ids: deviceids.map((item) => item.deviceid),
+        additionalData: {
+          params: {
+            idorder: itemOrder.idorder,
+          },
+          tujuan: "DetailTransaksi",
+        }
+      })
+    }
 
     res.status(200).json({
       status: true,
