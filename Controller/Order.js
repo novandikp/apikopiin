@@ -435,9 +435,9 @@ router.post("/biteship", function (req, res) {
   // let status = req.params.status
 
   if (status == "dropping_off") {
-    koneksi.none("update orders set status = 6  where id = " + order_id)
+    koneksi.none("update orders set status = 6  where id_order_biteship = '" + order_id+"'")
   } else if (status == "delivered") {
-    koneksi.none("update orders set status = 7  where id = " + order_id)
+    koneksi.none("update orders set status = 7  where id_order_biteship = '" + order_id+"'")
   }
 
   res.status(200).json({
