@@ -286,6 +286,8 @@ router.put("/terima/:id", async function (req, res) {
   let dataOrder = await koneksi.one(sqlorder, [req.params.id])
   let dataDetail = await koneksi.query(sqldetail, [req.params.id])
   let dataMerchant = await koneksi.one(sqlmerchant, [req.params.id])
+  let momenttz = require("moment-timezone")
+
   let kurir = dataOrder.kurir.split("/")
   let catatan = dataDetail
     .map(function (e) {
@@ -324,8 +326,8 @@ router.put("/terima/:id", async function (req, res) {
     courier_company: kurir[0],
     courier_type: kurir[1],
     delivery_type: "later",
-    delivery_date: moment().format("yyyy-MM-DD"),
-    delivery_time: moment().format("HH:mm"),
+    delivery_date: momenttz().tz("Asia/Jakarta").format("yyyy-MM-DD"),
+    delivery_time: momenttz().tz("Asia/Jakarta").format("HH:mm"),
     order_note: dataOrder.no_faktur,
     items: [
       {
