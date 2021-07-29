@@ -56,7 +56,7 @@ router.post("/like/:id", function (req, res) {
         if (dataLikePerson.length > 0) {
           sendNotification({
             heading: "Postingan yang anda sukai disukai dengan orang lain",
-            content: `${personData.nama_lengkap} juga dari postingan ${dataLikePerson[0]?.nama_lengkap} yang anda suka`,
+            content: `${personData.nama_lengkap} juga menyukai postingan ${dataLikePerson[0]?.nama_lengkap} yang anda suka`,
             player_ids: dataLikePerson.map((item) => item.deviceid),
             additionalData: {
               params: {
