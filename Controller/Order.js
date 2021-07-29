@@ -148,7 +148,7 @@ router.get("/shop/:id", async function (req, res, next) {
   }
 
   let data = await koneksi.query(
-    `SELECT orders.id, id_user, tgl_order, no_faktur, status, nama_lengkap,no_telp,foto_user from orders inner join (SELECT id,id_order,id_barang from order_detail) T on T.id_order = orders.id inner join barang on barang.id = T.id_barang inner join merchant on merchant.id = barang.id_merchant inner join users on users.id = orders.id_user
+    `SELECT orders.id, id_user,id_order_biteship, tgl_order, no_faktur, status, nama_lengkap,no_telp,foto_user from orders inner join (SELECT id,id_order,id_barang from order_detail) T on T.id_order = orders.id inner join barang on barang.id = T.id_barang inner join merchant on merchant.id = barang.id_merchant inner join users on users.id = orders.id_user
      where ${columnStatus} (no_faktur ilike '%${cari}%' or nama_lengkap ilike '%${cari}%') and merchant.id=${id} and tgl_order between '${tglAwal}' and '${tglAkhir}' limit ${limit} offset ${offset}`,
     [statusData]
   )
