@@ -287,6 +287,8 @@ router.put("/terima/:id", async function (req, res) {
   let dataOrder = await koneksi.one(sqlorder, [req.params.id])
   let dataDetail = await koneksi.query(sqldetail, [req.params.id])
   let dataMerchant = await koneksi.one(sqlmerchant, [req.params.id])
+  let momenttz = require("moment-timezone")
+  console.log(momenttz().tz("Asia/Jakarta").format("HH:mm"))
   let kurir = dataOrder.kurir.split("/")
   let catatan = dataDetail
     .map(function (e) {
@@ -325,8 +327,8 @@ router.put("/terima/:id", async function (req, res) {
     courier_company: kurir[0],
     courier_type: kurir[1],
     delivery_type: "later",
-    delivery_date: moment().format("yyyy-MM-DD"),
-    delivery_time: moment().format("HH:mm"),
+    delivery_date: momenttz().tz("Asia/Jakarta").format("yyyy-MM-DD"),
+    delivery_time: momenttz().tz("Asia/Jakarta").format("HH:mm"),
     order_note: dataOrder.no_faktur,
     items: [
       {
@@ -522,6 +524,26 @@ router.put("/siapantar/:id", async function (req, res) {
         errorMessage: "Dara gagal dimasukkan",
       })
     })
+})
+
+router.post("/biteship", function (req, res) {
+  let order_id = req.body.order_id
+  let status = req.body.status
+  // let status_code = "1"
+  // let status = req.params.status
+
+  if (status == "dropping_off") {
+    koneksi.none("update orders set status = 6  where id_order_biteship = '" + order_id+"'")
+  } else if (status == "delivered") {
+    koneksi.none("update orders set status = 7  where id_order_biteship = '" + order_id+"'")
+  }
+
+  res.status(200).json({
+    status: true,
+  })
+  return
+
+  // }
 })
 
 //Ubah Status Order

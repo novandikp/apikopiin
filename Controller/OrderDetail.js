@@ -105,7 +105,7 @@ router.get("/orders/detail/:id", async function (req, res) {
 })
 
 router.get("/orders/:id", async function (req, res) {
-  let sqlorder = `SELECT orders.status, orders.tgl_order, orders.no_faktur, orders.kurir, orders.no_resi, alamat.nama, nama_lengkap, alamat.no_telp, 
+  let sqlorder = `SELECT orders.status, orders.ongkir, orders.tgl_order, orders.no_faktur, orders.kurir, orders.no_resi, alamat.nama, nama_lengkap, alamat.no_telp, 
   alamat.detail,alamat.provinsi, alamat.kota, alamat.kecamatan , orders.metode_pembayaran from orders INNER join alamat on  orders.id_alamat
   = alamat.id inner join users on users.id = orders.id_user where orders.id = $1`
   let order = await db.one(sqlorder, [req.params.id])
