@@ -402,11 +402,11 @@ router.put("/batalkan/:id", async function (req, res) {
     let sqlmerchant =
       "SELECT merchant.id, nama_toko,no_telp, merchant.alamat_toko,merchant.provinsi, merchant.kota,merchant.kecamatan,lat_toko,long_toko from order_detail inner join barang on order_detail.id_barang= barang.id inner join merchant on merchant.id = barang.id_merchant inner join users on users.id_merchant = merchant.id where id_order=$1"
     let dataOrder = await koneksi.one(sqlorder, [req.params.id])
-    console.log("dataOrder")
+    // console.log("dataOrder")
     let dataDetail = await koneksi.query(sqldetail, [req.params.id])
-    console.log("dataDetail")
+    // console.log("dataDetail")
     let dataMerchant = await koneksi.one(sqlmerchant, [req.params.id])
-    console.log("dataMerchant")
+    // console.log("dataMerchant")
     await koneksi.none("BEGIN")
     // console.log(`UPDATE orders set status = -1 where orders.id=${req.params.id}`)
     await koneksi.none(`UPDATE orders set status = -1 where orders.id=$1`, [
@@ -458,7 +458,7 @@ router.put("/batalkan/:id", async function (req, res) {
       `INSERT INTO public.jurnal_detail (id_jurnal, uid, userver, debit, kredit) VALUES(${id}, ${dataOrder.id_user}, 1, ${total}, 0);`
     )
 
-    // await koneksi.none("COMMIT")
+    await koneksi.none("COMMIT")
     let deviceids_user = await koneksi.query(
       `SELECT deviceid FROM user_log WHERE id_user=${dataOrder.id_user} and flaglogin=1`
     )
