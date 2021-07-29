@@ -287,7 +287,7 @@ router.put("/terima/:id", async function (req, res) {
   let dataDetail = await koneksi.query(sqldetail, [req.params.id])
   let dataMerchant = await koneksi.one(sqlmerchant, [req.params.id])
   let momenttz = require("moment-timezone")
-
+  console.log(momenttz().tz("Asia/Jakarta").format("HH:mm"))
   let kurir = dataOrder.kurir.split("/")
   let catatan = dataDetail
     .map(function (e) {
