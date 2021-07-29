@@ -110,7 +110,7 @@ router.get("/orders/:id", async function (req, res) {
   = alamat.id inner join users on users.id = orders.id_user where orders.id = $1`
   let order = await db.one(sqlorder, [req.params.id])
 
-  let sql = `SELECT order_detail.id,barang.nama, nama_toko, barang.foto_barang , order_detail.harga, order_detail.jumlah, berat, COALESCE(varian.nama_varian,'-') as varian, COALESCE(order_detail.keterangan,'-') as keterangan from order_detail inner join barang on order_detail.id_barang = barang.id left join varian on varian.id = order_detail.id_varian inner join merchant on merchant.id = barang.id where order_detail.id_order = $1`
+  let sql = `SELECT order_detail.id,barang.nama, nama_toko, barang.foto_barang , order_detail.harga, order_detail.jumlah, berat, COALESCE(varian.nama_varian,'-') as varian, COALESCE(order_detail.keterangan,'-') as keterangan from order_detail inner join barang on order_detail.id_barang = barang.id left join varian on varian.id = order_detail.id_varian inner join merchant on merchant.id = barang.id_merchant where order_detail.id_order = $1`
   let data = await db.query(sql, [req.params.id])
   order["detailorder"] = data
   res.status(200).json({
