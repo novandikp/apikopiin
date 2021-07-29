@@ -3,6 +3,7 @@ const db = require("../Util/Database")
 var router = express.Router()
 var koneksi = require("../Util/Database")
 var multer = require("multer")
+const { sendNotification } = require("../Util/Function")
 
 var storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -41,7 +42,31 @@ router.post("/like/:id", function (req, res) {
   }
 
   db.none(sql, [req.params.id, req.body.id_user])
-    .then((data) => {
+    .then(async (data) => {
+      if (req.body.liked == "true") {
+        let person = "select nama_lengkap from users where id =$1"
+        let personData = await koneksi.one(person, [req.body.id_user])
+        let likedPerson = `SELECT deviceid from user_log CROSS JOIN 
+        (SELECT postingan.id_user, users.nama_lengkap from postingan inner join users on users.id = postingan.id_user where postingan.id=$1) T
+        where user_log.id_user in (SELECT id_user from likepostingan where id_postingan =$1)  and user_log.id_user !=$2`
+        let dataLikePerson = await koneksi.query(likedPerson, [
+          req.params.id,
+          req.body.id_user,
+        ])
+        if (dataLikePerson.length > 0) {
+          sendNotification({
+            heading: "Postingan yang anda sukai disukai dengan orang lain",
+            content: `${personData.nama_lengkap} juga dari postingan ${dataLikePerson[0]?.nama_lengkap} yang anda suka`,
+            player_ids: dataLikePerson.map((item) => item.deviceid),
+            additionalData: {
+              params: {
+                idorder: req.params.id,
+              },
+              tujuan: "Feed",
+            },
+          })
+        }
+      }
       res.status(200).json({
         status: true,
       })
