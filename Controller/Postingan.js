@@ -116,7 +116,7 @@ router.get("/", async function (req, res) {
   if (req.query.offset) {
     offset = req.query.offset
   }
-  let sql = `SELECT postingan.id, tglpostingan, foto_user, foto_barang, postingan.id_user, id_barang, postingan, foto_postingan, barang.nama, barang.harga, nama_lengkap, COALESCE(T.count,0) as liked, COALESCE(T.count,0) as like from postingan inner join users on users.id = postingan.id_user left join barang on barang.id = postingan.id_barang left join (SELECT count(id) as count,id_postingan from likepostingan where id_user=$1 group by id_postingan) T on T.id_postingan = postingan.id left join (SELECT count(id) as count,id_postingan from likepostingan group by id_postingan) B on B.id_postingan = postingan.id  order by tglpostingan desc,postingan.id desc limit ${limit} offset ${offset}`
+  let sql = `SELECT postingan.id, tglpostingan, foto_user, foto_barang, postingan.id_user, id_barang, postingan, foto_postingan, barang.nama, barang.harga, nama_lengkap, COALESCE(T.count,0) as liked, COALESCE(B.count,0) as like from postingan inner join users on users.id = postingan.id_user left join barang on barang.id = postingan.id_barang left join (SELECT count(id) as count,id_postingan from likepostingan where id_user=$1 group by id_postingan) T on T.id_postingan = postingan.id left join (SELECT count(id) as count,id_postingan from likepostingan group by id_postingan) B on B.id_postingan = postingan.id  order by tglpostingan desc,postingan.id desc limit ${limit} offset ${offset}`
   let data = await koneksi.query(sql, [iduser])
   res.status(200).json({
     status: true,
