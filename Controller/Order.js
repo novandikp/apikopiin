@@ -280,7 +280,7 @@ router.put("/terima/:id", async function (req, res) {
   let dataOrder = await koneksi.one(sqlorder, [req.params.id])
   let dataDetail = await koneksi.query(sqldetail, [req.params.id])
   let dataMerchant = await koneksi.one(sqlmerchant, [req.params.id])
-  let kurir = dataOrder.kurir?.split("/")
+  let kurir = dataOrder.kurir.split("/")
   let catatan = dataDetail
     .map(function (e) {
       return e.nama
