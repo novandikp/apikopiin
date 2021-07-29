@@ -148,7 +148,7 @@ router.get("/shop/:id", async function (req, res, next) {
   }
 
   let data = await koneksi.query(
-    `SELECT orders.id, id_user, tgl_order, no_faktur, status, nama_lengkap,no_telp,foto_user from orders inner join (SELECT id,id_order,id_barang from order_detail) T on T.id_order = orders.id inner join barang on barang.id = T.id_barang inner join merchant on merchant.id = barang.id_merchant inner join users on users.id = orders.id_user
+    `SELECT orders.id, id_user,id_order_biteship, tgl_order, no_faktur, status, nama_lengkap,no_telp,foto_user from orders inner join (SELECT id,id_order,id_barang from order_detail) T on T.id_order = orders.id inner join barang on barang.id = T.id_barang inner join merchant on merchant.id = barang.id_merchant inner join users on users.id = orders.id_user
      where ${columnStatus} (no_faktur ilike '%${cari}%' or nama_lengkap ilike '%${cari}%') and merchant.id=${id} and tgl_order between '${tglAwal}' and '${tglAkhir}' limit ${limit} offset ${offset}`,
     [statusData]
   )
@@ -685,8 +685,8 @@ router.post("/biteship", async function (req, res) {
   try {
     let heading, content
     let dataOrder =
-      await koneksi.one(`SELECT id,no_faktur,u.id as id_user FROM orders o where id_order_biteship='${order_id}'
-                    INNER JOIN users u on u.id=o.id_user`)
+      await koneksi.one(`SELECT o.id,no_faktur,u.id as id_user FROM orders o 
+                    INNER JOIN users u on u.id=o.id_user where id_order_biteship='${order_id}'`)
     if (status == "dropping_off") {
       await koneksi.none(
         "update orders set status = 5 where id_order_biteship = '" +
@@ -697,7 +697,7 @@ router.post("/biteship", async function (req, res) {
       content = `Pesanan Anda ${dataOrder.no_faktur} sedang diantar ke alamat tujuan..`
     } else if (status == "delivered") {
       await koneksi.none(
-        "update orders set status = 7  where id_order_biteship = '" +
+        "update orders set status = 6  where id_order_biteship = '" +
           order_id +
           "'"
       )
@@ -716,7 +716,7 @@ router.post("/biteship", async function (req, res) {
         player_ids: deviceids.map((item) => item.deviceid),
         additionalData: {
           params: {
-            idorder: req.params.id,
+            idorder: dataOrder.id,
           },
           tujuan: "DetailTransaksi",
         },
