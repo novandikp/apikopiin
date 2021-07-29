@@ -345,6 +345,7 @@ router.put("/terima/:id", async function (req, res) {
       },
     })
     .then(async ({ data }) => {
+      await koneksi.none("BEGIN")
       koneksi
         .none(
           "UPDATE orders set status = 3, id_order_biteship=$1 where orders.id=$2",
@@ -354,33 +355,35 @@ router.put("/terima/:id", async function (req, res) {
           console.log(e)
         })
 
-        let deviceids = await koneksi.query(
-          `SELECT deviceid FROM user_log WHERE id_user=${dataOrder.id_user} and flaglogin=1`
-        )
-        // Jika ndak ada deviceid, skip biar ndak error
-        if (deviceids.length){
-          sendNotification({
-            heading: "Pesanan Sedang Diproses",
-            content: `Pesanan Anda ${dataOrder.no_faktur} diterima oleh ${dataMerchant.nama_toko}.`,
-            player_ids: deviceids.map((item) => item.deviceid),
-            additionalData: {
-              params: {
-                idorder: req.params.id,
-              },
-              tujuan: "DetailTransaksi",
-            }
-          })
-        }
+      await koneksi.none("COMMIT")
+      let deviceids = await koneksi.query(
+        `SELECT deviceid FROM user_log WHERE id_user=${dataOrder.id_user} and flaglogin=1`
+      )
+      // Jika ndak ada deviceid, skip biar ndak error
+      if (deviceids.length) {
+        sendNotification({
+          heading: "Pesanan Sedang Diproses",
+          content: `Pesanan Anda ${dataOrder.no_faktur} diterima oleh ${dataMerchant.nama_toko}.`,
+          player_ids: deviceids.map((item) => item.deviceid),
+          additionalData: {
+            params: {
+              idorder: req.params.id,
+            },
+            tujuan: "DetailTransaksi",
+          },
+        })
+      }
       res.status(200).json({
         status: true,
         msg: "Dara berhasil dimasukkan",
       })
     })
-    .catch((e) => {
+    .catch(async (e) => {
+      await koneksi.none("ROLLBACK")
       console.log(e)
       res.status(500).json({
         status: false,
-        errorMessage: "Dara gagal dimasukkan",
+        errorMessage: "Data gagal dimasukkan",
       })
     })
 })
@@ -566,7 +569,7 @@ router.post("/ewallet-webhook", async (req, res, next) => {
             idorder: itemOrder.idorder,
           },
           tujuan: "DetailTransaksi",
-        }
+        },
       })
     }
 
