@@ -67,7 +67,7 @@ router.get("/user/:id", async function (req, res, next) {
     tglAkhir = req.query.enddate
   }
 
-  let columnStatus = "status > 0 and"
+  let columnStatus = "status != 0 and"
   let statusData = []
   if (req.query.status) {
     statusData = req.query.status.split("_")
@@ -533,9 +533,17 @@ router.post("/biteship", function (req, res) {
   // let status = req.params.status
 
   if (status == "dropping_off") {
-    koneksi.none("update orders set status = 6  where id_order_biteship = '" + order_id+"'")
+    koneksi.none(
+      "update orders set status = 6  where id_order_biteship = '" +
+        order_id +
+        "'"
+    )
   } else if (status == "delivered") {
-    koneksi.none("update orders set status = 7  where id_order_biteship = '" + order_id+"'")
+    koneksi.none(
+      "update orders set status = 7  where id_order_biteship = '" +
+        order_id +
+        "'"
+    )
   }
 
   res.status(200).json({
