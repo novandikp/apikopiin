@@ -1,9 +1,11 @@
 var express = require("express")
+var axios = require("axios")
 const db = require("../Util/Database")
 var router = express.Router()
 var koneksi = require("../Util/Database")
 const handlerInput = require("../Util/ValidationHandler")
 const validate = require("../Validation/OrderValidation")
+const moment = require("moment")
 
 //GET
 router.get("/", async function (req, res) {
@@ -145,17 +147,10 @@ router.get("/shop/:id", async function (req, res, next) {
      where ${columnStatus} (no_faktur ilike '%${cari}%' or nama_lengkap ilike '%${cari}%') and merchant.id=${id} and tgl_order between '${tglAwal}' and '${tglAkhir}' limit ${limit} offset ${offset}`,
     [statusData]
   )
-  if (data.length == 1) {
-    res.status(200).json({
-      status: true,
-      data: data,
-    })
-  } else {
-    res.status(200).json({
-      status: false,
-      data: [],
-    })
-  }
+  res.status(200).json({
+    status: true,
+    data: data,
+  })
 })
 
 //INSERT
@@ -275,6 +270,138 @@ router.put("/generate", async function (req, res) {
   }
 })
 
+router.put("/terima/:id", async function (req, res) {
+  let sqlorder =
+    "SELECT orders.no_faktur, kurir,alamat.nama,alamat.latitude, alamat.longitude, alamat.detail, alamat.provinsi, alamat.kota,alamat.kecamatan,alamat.no_telp from orders inner join alamat on alamat.id =orders.id_alamat where orders.id=$1"
+  let sqldetail =
+    "SELECT barang.nama from order_detail inner join barang on order_detail.id_barang= barang.id  where id_order=$1"
+  let sqlmerchant =
+    "SELECT nama_toko,no_telp, merchant.alamat_toko,merchant.provinsi, merchant.kota,merchant.kecamatan,lat_toko,long_toko from order_detail inner join barang on order_detail.id_barang= barang.id inner join merchant on merchant.id = barang.id_merchant inner join users on users.id_merchant = merchant.id where id_order=$1"
+  let dataOrder = await koneksi.one(sqlorder, [req.params.id])
+  let dataDetail = await koneksi.query(sqldetail, [req.params.id])
+  let dataMerchant = await koneksi.one(sqlmerchant, [req.params.id])
+  let kurir = dataOrder.kurir?.split("/")
+  let catatan = dataDetail
+    .map(function (e) {
+      return e.nama
+    })
+    .join(",")
+  let dataBody = {
+    origin_contact_name: dataOrder.nama,
+    origin_contact_phone: dataOrder.no_telp,
+    origin_address:
+      dataOrder.detail +
+      "," +
+      dataOrder.kecamatan +
+      "," +
+      dataOrder.kota +
+      "," +
+      dataOrder.provinsi,
+    origin_coordinate: {
+      latitude: dataOrder.latitude,
+      longitude: dataOrder.longitude,
+    },
+    destination_contact_name: dataMerchant.nama_toko,
+    destination_contact_phone: dataMerchant.no_telp,
+    destination_address:
+      dataMerchant.alamat_toko +
+      "," +
+      dataMerchant.kecamatan +
+      "," +
+      dataMerchant.kota +
+      "," +
+      dataMerchant.provinsi,
+    destination_coordinate: {
+      latitude: dataMerchant.lat_toko,
+      longitude: dataMerchant.long_toko,
+    },
+    courier_company: kurir[0],
+    courier_type: kurir[1],
+    delivery_type: "later",
+    delivery_date: moment().format("yyyy-MM-DD"),
+    delivery_time: moment().format("HH:mm"),
+    order_note: dataOrder.no_faktur,
+    items: [
+      {
+        name: dataOrder.no_faktur,
+        description: catatan,
+      },
+    ],
+  }
+  // res.json(dataBody)
+  let kode = process.env.APIKEYBITESHIP
+
+  axios
+    .post("https://api.biteship.com/v1/orders", JSON.stringify(dataBody), {
+      headers: {
+        Authorization: `Bearer ${kode}`,
+        "Content-Type": "application/json",
+      },
+    })
+    .then(({ data }) => {
+      koneksi
+        .none(
+          "UPDATE orders set status = 3, id_order_biteship=$1 where orders.id=$2",
+          [data.id, req.params.id]
+        )
+        .catch((e) => {
+          console.log(e)
+        })
+      res.status(200).json({
+        status: true,
+        msg: "Dara berhasil dimasukkan",
+      })
+    })
+    .catch((e) => {
+      console.log(e)
+      res.status(500).json({
+        status: false,
+        errorMessage: "Dara gagal dimasukkan",
+      })
+    })
+})
+
+router.put("/siapantar/:id", async function (req, res) {
+  let sqlorder =
+    "SELECT orders.no_faktur, id_order_biteship from orders where orders.id=$1"
+  let dataOrder = await koneksi.one(sqlorder, [req.params.id])
+
+  // res.json(dataBody)
+  let kode = process.env.APIKEYBITESHIP
+  axios
+    .post(
+      "https://api.biteship.com/v1/orders/" +
+        dataOrder.id_order_biteship +
+        "/confirm",
+      JSON.stringify({}),
+      {
+        headers: {
+          Authorization: `Bearer ${kode}`,
+          "Content-Type": "application/json",
+        },
+      }
+    )
+    .then(({ data }) => {
+      koneksi
+        .none("UPDATE orders set status = 4 where orders.id=$1", [
+          req.params.id,
+        ])
+        .catch((e) => {
+          console.log(e)
+        })
+      res.status(200).json({
+        status: true,
+        msg: "Data berhasil dimasukkan",
+      })
+    })
+    .catch((e) => {
+      res.status(500).json({
+        status: false,
+        errorMessage: "Dara gagal dimasukkan",
+      })
+    })
+})
+
 //Ubah Status Order
 router.put("/:status/:id", function (req, res) {
   let status_code = "1"
@@ -285,10 +412,6 @@ router.put("/:status/:id", function (req, res) {
       status_code = "1"
     } else if (status === "tolak") {
       status_code = "2"
-    } else if (status === "terima") {
-      status_code = "3"
-    } else if (status === "siapantar") {
-      status_code = "4"
     } else if (status === "antar") {
       status_code = "5"
     } else if (status === "sudahantar") {
@@ -346,7 +469,7 @@ router.delete("/:id", async function (req, res, next) {
 router.post("/ewallet-webhook", async (req, res, next) => {
   // console.log(req.body)
   const { reference_id, status, charge_amount, channel_code } = req.body.data
-  if (status != "SUCCEEDED" || reference_id == 'test-payload') {
+  if (status != "SUCCEEDED" || reference_id == "test-payload") {
     // console.log('masuk sini')
     return res.status(200).json({
       status: true,

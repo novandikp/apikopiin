@@ -15,17 +15,24 @@ router.get("/", async function (req, res) {
 router.get("/shop/:id", async function (req, res) {
   let id = req.params.id
   let data = await koneksi.query(
-    `SELECT kurirtoko.id, id_merchant, kurirtoko.kodekurir, kurir.kurir, nama_toko from kurirtoko inner join kurir on kurir.kodekurir = kurirtoko.kodekurir inner join merchant on merchant.id = kurirtoko.id_merchant where id_merchant=$1`,
+    `SELECT kurirtoko.id, id_merchant, kurirtoko.kodekurir, kurir.kurir from kurirtoko inner join kurir on kurir.kodekurir = kurirtoko.kodekurir  where id_merchant=$1`,
     [id]
   )
+
+  let header = await koneksi.one(
+    `select nama_toko,alamat_toko from merchant where id = $1`,
+    [id]
+  )
+
+  header["kurir"] = data
   res.status(200).json({
     status: true,
-    data: data,
+    data: header,
   })
 })
 
 router.post("/", async function (req, res) {
-  if (req.body.kodekurir.length > 0) {
+  if (req.body.kodekurir?.length > 0) {
     try {
       let sql = "delete from kurirtoko where id_merchant = $1"
       await db.none(sql, [req.body.id_merchant])
