@@ -391,6 +391,128 @@ router.put("/terima/:id", async function (req, res) {
     })
 })
 
+router.put("/batalkan/:id", async function (req, res) {
+  try {
+    let sqlorder = `SELECT ongkir, u.nama_lengkap, orders.id_user,orders.no_faktur, kurir,alamat.nama,alamat.latitude, alamat.longitude, alamat.detail, alamat.provinsi, 
+                  alamat.kota,alamat.kecamatan,alamat.no_telp from orders inner join alamat on alamat.id =orders.id_alamat 
+                  inner join users u on u.id=orders.id_user
+                  where orders.id=$1`
+    let sqldetail =
+      "SELECT barang.nama,od.harga,od.jumlah from order_detail od inner join barang on od.id_barang= barang.id where id_order=$1"
+    let sqlmerchant =
+      "SELECT merchant.id, nama_toko,no_telp, merchant.alamat_toko,merchant.provinsi, merchant.kota,merchant.kecamatan,lat_toko,long_toko from order_detail inner join barang on order_detail.id_barang= barang.id inner join merchant on merchant.id = barang.id_merchant inner join users on users.id_merchant = merchant.id where id_order=$1"
+    let dataOrder = await koneksi.one(sqlorder, [req.params.id])
+    // console.log("dataOrder")
+    let dataDetail = await koneksi.query(sqldetail, [req.params.id])
+    // console.log("dataDetail")
+    let dataMerchant = await koneksi.one(sqlmerchant, [req.params.id])
+    // console.log("dataMerchant")
+    await koneksi.none("BEGIN")
+    // console.log(`UPDATE orders set status = -1 where orders.id=${req.params.id}`)
+    await koneksi.none(`UPDATE orders set status = -1 where orders.id=$1`, [
+      req.params.id,
+    ])
+
+    // Insert jurnal
+    let { fakturjurnal } = await koneksi.one(`select
+    (
+        'JL' || extract(
+            year
+            from
+                now()
+        ) || extract(
+            month
+            from
+                now()
+        ) || extract(
+            day
+            from
+                now()
+        ) || (
+            select
+                case
+                    when faktur is null then '0001'
+                    else substring(faktur, 10, 3) || (substring(faktur, 13, 1) :: int + 1)
+                end
+            from
+                (
+                    select
+                        max(no_faktur) as faktur
+                    from
+                        jurnal j2
+                    where
+                        tglcreate >= current_date
+                ) t
+        )
+    ) as fakturjurnal`)
+    let { id } =
+      await koneksi.one(`INSERT INTO public.jurnal (no_faktur, keterangan)
+                      VALUES('${fakturjurnal}', 'Pesanan Dibatalkan No. Faktur : ${dataOrder.no_faktur}') RETURNING id;`)
+    let total = 0
+    for (let i = 0; i < dataDetail.length; i++) {
+      const itemDetail = dataDetail[i]
+      total += itemDetail.harga * itemDetail.jumlah
+    }
+    total += dataOrder.ongkir
+    await koneksi.none(
+      `INSERT INTO public.jurnal_detail (id_jurnal, uid, userver, debit, kredit) VALUES(${id}, ${dataOrder.id_user}, 1, ${total}, 0);`
+    )
+
+    await koneksi.none("COMMIT")
+    let deviceids_user = await koneksi.query(
+      `SELECT deviceid FROM user_log WHERE id_user=${dataOrder.id_user} and flaglogin=1`
+    )
+    let deviceids_merchant = await koneksi.query(
+      `SELECT deviceid FROM merchant_log WHERE id_merchant=${dataMerchant.id} and flaglogin=1`
+    )
+    // Jika ndak ada deviceid, skip biar ndak error
+    if (deviceids_merchant.length) {
+      // Send Notifikasi Merchant
+      sendNotification({
+        heading: "Pesanan Dibatalkan",
+        content: `${dataOrder.nama_lengkap} membatalkan pesanan ${dataOrder.no_faktur}`,
+        player_ids: deviceids_merchant.map((item) => item.deviceid),
+        additionalData: {
+          params: {
+            idorder: req.params.id,
+          },
+          tujuan: "DetailTransaksi",
+        },
+      }).catch(e => {
+        console.log('eror send notif merchant',e)
+      })
+    }
+
+    if (deviceids_user.length) {
+      // Send notifikasi User
+      sendNotification({
+        heading: "Pesanan Dibatalkan",
+        content: `Pesanan Anda ${dataOrder.no_faktur} berhasil dibatalkan. Saldo E-Kopee Anda akan secara otomatis bertambah`,
+        player_ids: deviceids_user.map((item) => item.deviceid),
+        additionalData: {
+          params: {
+            idorder: req.params.id,
+          },
+          tujuan: "DetailTransaksi",
+        },
+      }).catch(e => {
+        console.log('eror send notif user',e)
+      })
+    }
+    res.status(200).json({
+      status: true,
+      msg: "Pesanan berhasil ditolak",
+    })
+  } catch (e) {
+    await koneksi.none("ROLLBACK")
+    console.log("error batalkan pesanan", e)
+    res.status(500).json({
+      status: false,
+      errorMessage: "Data gagal dimasukkan",
+    })
+  }
+})
+
 router.put("/tolak/:id", async function (req, res) {
   try {
     let sqlorder = `SELECT ongkir, orders.id_user,orders.no_faktur, kurir,alamat.nama,alamat.latitude, alamat.longitude, alamat.detail, alamat.provinsi, 
