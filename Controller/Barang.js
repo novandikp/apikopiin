@@ -40,6 +40,7 @@ router.get("/", async function (req, res) {
     kategori = "AND id_kategori = " + req.query.kategori
   }
 
+  console.log("")
   let data = await koneksi.query(
     `SELECT barang.id, foto_barang, id_merchant, id_kategori, nama, barang.deskripsi, barang.harga, berat, stok,  nama_toko, jenis_toko.jenis, COALESCE(T.rating,0) as rating ,COALESCE(B.terjual,0) as terjual
     from barang  inner join merchant ON barang.id_merchant = merchant.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON merchant.id_jenis = jenis_toko.id LEFT join (SELECT id_barang, ROUND(avg(rating),1) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id
