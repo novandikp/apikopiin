@@ -523,7 +523,7 @@ router.post("/ewallet-webhook", async (req, res, next) => {
     await koneksi.none(
       `INSERT INTO public.jurnal_detail (id_jurnal, uid, userver, debit, kredit) VALUES(${id}, 0, 0, ${charge_amount}, 0);`
     )
-    // await koneksi.none(`COMMIT`)
+    await koneksi.none(`COMMIT`)
 
     let dataOrder =
       await koneksi.query(`SELECT o.id as idorder,no_faktur,id_user,u.nama_lengkap, (select b2.id_merchant from order_detail od
