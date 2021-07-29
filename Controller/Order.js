@@ -77,7 +77,7 @@ router.get("/user/:id", async function (req, res, next) {
     }
   }
 
-  console.log(columnStatus)
+  // console.log(columnStatus)
   let limit = "10"
   let offset = "0"
   if (req.query.limit) {
@@ -92,8 +92,8 @@ router.get("/user/:id", async function (req, res, next) {
      where ${columnStatus} (no_faktur ilike '%${cari}%' or nama_toko ilike '%${cari}%') and id_user=${id} and tgl_order between '${tglAwal} 00:00:00' and '${tglAkhir} 23:59:59' limit ${limit} offset ${offset}`,
     [statusData]
   )
-  console.log(`SELECT orders.id, id_user, tgl_order, no_faktur, status, nama_toko,foto_merchant, no_telp from orders inner join (SELECT id,id_order,id_barang from order_detail) T on T.id_order = orders.id inner join barang on barang.id = T.id_barang inner join merchant on merchant.id = barang.id_merchant inner join users on users.id_merchant = merchant.id
-  where ${columnStatus} (no_faktur ilike '%${cari}%' or nama_toko ilike '%${cari}%') and id_user=${id} and tgl_order between '${tglAwal} 00:00:00' and '${tglAkhir} 23:59:59' limit ${limit} offset ${offset}`)
+  // console.log(`SELECT orders.id, id_user, tgl_order, no_faktur, status, nama_toko,foto_merchant, no_telp from orders inner join (SELECT id,id_order,id_barang from order_detail) T on T.id_order = orders.id inner join barang on barang.id = T.id_barang inner join merchant on merchant.id = barang.id_merchant inner join users on users.id_merchant = merchant.id
+  // where ${columnStatus} (no_faktur ilike '%${cari}%' or nama_toko ilike '%${cari}%') and id_user=${id} and tgl_order between '${tglAwal} 00:00:00' and '${tglAkhir} 23:59:59' limit ${limit} offset ${offset}`)
   if (data.length) {
     res.status(200).json({
       status: true,
@@ -209,7 +209,7 @@ router.put("/generate", async function (req, res) {
     for (let i = 0; i < cartData.length; i++) {
       const {
         id,
-        shipping: { courier_code, courier_service_code },
+        shipping: { courier_code, courier_service_code, biaya },
         metode_pembayaran,
       } = cartData[i]
       let kurirKode = `${courier_code}/${courier_service_code}`
@@ -246,7 +246,8 @@ router.put("/generate", async function (req, res) {
       ) as nofaktur;`)
       if (i == 0) reference_id = nofaktur
       await koneksi.none(
-        `UPDATE orders SET kurir='${kurirKode}', no_faktur='${nofaktur}', metode_pembayaran='${metode_pembayaran}', tgl_order=CURRENT_DATE  WHERE id=${id}`
+        `UPDATE orders SET kurir='${kurirKode}', no_faktur='${nofaktur}', metode_pembayaran='${metode_pembayaran}', tgl_order=CURRENT_DATE 
+        , ongkir=${biaya} WHERE id=${id}`
       )
     }
     let lastIndex = cartData.length - 1
@@ -389,21 +390,66 @@ router.put("/terima/:id", async function (req, res) {
 })
 
 router.put("/tolak/:id", async function (req, res) {
-  let sqlorder =
-    "SELECT orders.id_user,orders.no_faktur, kurir,alamat.nama,alamat.latitude, alamat.longitude, alamat.detail, alamat.provinsi, alamat.kota,alamat.kecamatan,alamat.no_telp from orders inner join alamat on alamat.id =orders.id_alamat where orders.id=$1"
-  let sqldetail =
-    "SELECT barang.nama from order_detail inner join barang on order_detail.id_barang= barang.id  where id_order=$1"
-  let sqlmerchant =
-    "SELECT nama_toko,no_telp, merchant.alamat_toko,merchant.provinsi, merchant.kota,merchant.kecamatan,lat_toko,long_toko from order_detail inner join barang on order_detail.id_barang= barang.id inner join merchant on merchant.id = barang.id_merchant inner join users on users.id_merchant = merchant.id where id_order=$1"
-  let dataOrder = await koneksi.one(sqlorder, [req.params.id])
-  let dataDetail = await koneksi.query(sqldetail, [req.params.id])
-  let dataMerchant = await koneksi.one(sqlmerchant, [req.params.id])
-
   try {
+    let sqlorder = `SELECT ongkir, orders.id_user,orders.no_faktur, kurir,alamat.nama,alamat.latitude, alamat.longitude, alamat.detail, alamat.provinsi, 
+    alamat.kota,alamat.kecamatan,alamat.no_telp from orders inner join alamat on alamat.id =orders.id_alamat where orders.id=$1`
+    let sqldetail =
+      "SELECT barang.nama,od.harga,od.jumlah from order_detail od inner join barang on od.id_barang= barang.id where id_order=$1"
+    let sqlmerchant =
+      "SELECT nama_toko,no_telp, merchant.alamat_toko,merchant.provinsi, merchant.kota,merchant.kecamatan,lat_toko,long_toko from order_detail inner join barang on order_detail.id_barang= barang.id inner join merchant on merchant.id = barang.id_merchant inner join users on users.id_merchant = merchant.id where id_order=$1"
+    let dataOrder = await koneksi.one(sqlorder, [req.params.id])
+    let dataDetail = await koneksi.query(sqldetail, [req.params.id])
+    let dataMerchant = await koneksi.one(sqlmerchant, [req.params.id])
     await koneksi.none("BEGIN")
-    await koneksi.none(`UPDATE orders set status = 2, alasan_tolak='${req.body.alasan}' where orders.id=$1`, [
-      req.params.id,
-    ])
+    await koneksi.none(
+      `UPDATE orders set status = 2, alasan_tolak='${req.body.alasan}' where orders.id=$1`,
+      [req.params.id]
+    )
+
+    // Insert jurnal
+    let { fakturjurnal } = await koneksi.one(`select
+    (
+        'JL' || extract(
+            year
+            from
+                now()
+        ) || extract(
+            month
+            from
+                now()
+        ) || extract(
+            day
+            from
+                now()
+        ) || (
+            select
+                case
+                    when faktur is null then '0001'
+                    else substring(faktur, 10, 3) || (substring(faktur, 13, 1) :: int + 1)
+                end
+            from
+                (
+                    select
+                        max(no_faktur) as faktur
+                    from
+                        jurnal j2
+                    where
+                        tglcreate >= current_date
+                ) t
+        )
+    ) as fakturjurnal`)
+    let { id } =
+      await koneksi.one(`INSERT INTO public.jurnal (no_faktur, keterangan)
+                      VALUES('${fakturjurnal}', 'Pesanan Ditolak No. Faktur : ${dataOrder.no_faktur}') RETURNING id;`)
+    let total = 0
+    for (let i = 0; i < dataDetail.length; i++) {
+      const itemDetail = dataDetail[i]
+      total += itemDetail.harga * itemDetail.jumlah
+    }
+    total += dataOrder.ongkir
+    await koneksi.none(
+      `INSERT INTO public.jurnal_detail (id_jurnal, uid, userver, debit, kredit) VALUES(${id}, ${dataOrder.id_user}, 1, ${total}, 0);`
+    )
 
     await koneksi.none("COMMIT")
     let deviceids = await koneksi.query(
@@ -413,7 +459,7 @@ router.put("/tolak/:id", async function (req, res) {
     if (deviceids.length) {
       sendNotification({
         heading: "Pesanan Dibatalkan",
-        content: `Pesanan Anda ${dataOrder.no_faktur} ditolak oleh ${dataMerchant.nama_toko} karena ${req.body.alasan}. Silakan pilih obat yang lain.`,
+        content: `Pesanan Anda ${dataOrder.no_faktur} ditolak oleh ${dataMerchant.nama_toko} karena ${req.body.alasan}. Silakan pilih barang yang lain. Saldo E-kopee Anda akan secara otomatis bertambah.`,
         player_ids: deviceids.map((item) => item.deviceid),
         additionalData: {
           params: {
@@ -422,12 +468,11 @@ router.put("/tolak/:id", async function (req, res) {
           tujuan: "DetailTransaksi",
         },
       })
-
-      res.status(200).json({
-        status: true,
-        msg: "Pesanan berhasil ditolak",
-      })
     }
+    res.status(200).json({
+      status: true,
+      msg: "Pesanan berhasil ditolak",
+    })
   } catch (e) {
     await koneksi.none("ROLLBACK")
     console.log("error tolak order", e)
@@ -595,7 +640,7 @@ router.post("/ewallet-webhook", async (req, res, next) => {
     await koneksi.none(
       `INSERT INTO public.jurnal_detail (id_jurnal, uid, userver, debit, kredit) VALUES(${id}, 0, 0, ${charge_amount}, 0);`
     )
-    // await koneksi.none(`COMMIT`)
+    await koneksi.none(`COMMIT`)
 
     let dataOrder =
       await koneksi.query(`SELECT o.id as idorder,no_faktur,id_user,u.nama_lengkap, (select b2.id_merchant from order_detail od
