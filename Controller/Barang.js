@@ -41,8 +41,9 @@ router.get("/", async function (req, res) {
   }
 
   let data = await koneksi.query(
-    `SELECT barang.id, foto_barang, id_merchant, id_kategori, nama, barang.deskripsi, barang.harga, berat, stok,  nama_toko, jenis_toko.jenis, COALESCE(T.rating,0) as rating 
+    `SELECT barang.id, foto_barang, id_merchant, id_kategori, nama, barang.deskripsi, barang.harga, berat, stok,  nama_toko, jenis_toko.jenis, COALESCE(T.rating,0) as rating ,COALESCE(B.terjual,0) as terjual
     from barang  inner join merchant ON barang.id_merchant = merchant.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON merchant.id_jenis = jenis_toko.id LEFT join (SELECT id_barang, ROUND(avg(rating),1) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id
+    LEFT join (SELECT id_barang, sum(jumlah) as terjual from order_detail inner join orders  on orders.id = order_detail.id_order where status >= 7  GROUP by id_barang) B on B.id_barang =barang.id
     where COALESCE(T.rating,0) >= ${rating} ${kategori}  and (nama ILIKE '%${cari}%' OR 
     deskripsi  ILIKE '%${cari}%' OR
     nama_toko  ILIKE '%${cari}%') ORDER BY ` +
@@ -71,8 +72,9 @@ router.get("/shop/:id", async function (req, res) {
   }
   let id = req.params.id
   let data = await koneksi.query(
-    `SELECT barang.id, foto_barang, id_merchant, id_kategori, nama, barang.deskripsi, barang.harga, berat, stok,  nama_toko, jenis_toko.jenis, COALESCE(T.rating,0) as rating 
-    from barang  inner join merchant ON barang.id_merchant = merchant.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON merchant.id_jenis = jenis_toko.id LEFT join (SELECT id_barang, ROUND(avg(rating),1) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id where id_merchant=$1 and (
+    `SELECT barang.id, foto_barang, id_merchant, id_kategori, nama, barang.deskripsi, barang.harga, berat, stok,  nama_toko, jenis_toko.jenis, COALESCE(T.rating,0) as rating ,COALESCE(B.terjual,0) as terjual
+    from barang  inner join merchant ON barang.id_merchant = merchant.id inner join kategori ON barang.id_kategori = kategori.id inner join jenis_toko ON merchant.id_jenis = jenis_toko.id LEFT join (SELECT id_barang, ROUND(avg(rating),1) as rating from order_detail inner join ulasan  on ulasan.id_order_detail = order_detail.id GROUP by id_barang) T on T.id_barang = barang.id
+    LEFT join (SELECT id_barang, sum(jumlah) as terjual from order_detail inner join orders  on orders.id = order_detail.id_order where status >= 7  GROUP by id_barang) B on B.id_barang =barang.id where id_merchant=$1 and (
       nama ILIKE '%${cari}%' OR 
       deskripsi  ILIKE '%${cari}%' 
     )  limit ${limit} offset ${offset}`,
