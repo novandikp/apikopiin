@@ -46,7 +46,7 @@ router.post("/like/:id", function (req, res) {
       if (req.body.liked == "true") {
         let person = "select nama_lengkap from users where id =$1"
         let personData = await koneksi.one(person, [req.body.id_user])
-        let likedPerson = `SELECT deviceid from user_log CROSS JOIN 
+        let likedPerson = `SELECT deviceid,T.nama_lengkap from user_log CROSS JOIN 
         (SELECT postingan.id_user, users.nama_lengkap from postingan inner join users on users.id = postingan.id_user where postingan.id=$1) T
         where user_log.id_user in (SELECT id_user from likepostingan where id_postingan =$1)  and user_log.id_user !=$2`
         let dataLikePerson = await koneksi.query(likedPerson, [
