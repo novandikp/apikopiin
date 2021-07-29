@@ -350,7 +350,7 @@ router.put("/terima/:id", async function (req, res) {
     .then(async ({ data }) => {
       try {
         await koneksi.none("BEGIN")
-        koneksi.none(
+        await koneksi.none(
           "UPDATE orders set status = 3, id_order_biteship=$1 where orders.id=$2",
           [data.id, req.params.id]
         )
