@@ -427,8 +427,13 @@ router.put("/siapantar/:id", async function (req, res) {
 })
 
 router.post("/biteship", function (req, res) {
-  let status_code = "1"
-  let status = req.params.status
+  // let status_code = "1"
+  // let status = req.params.status
+  console.log(req.body)
+  //ini aja
+  //DROPing off
+
+  //delivered
 
   // if (status && id) {
   //   if (status === "tunggu") {
