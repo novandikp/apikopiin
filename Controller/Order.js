@@ -70,6 +70,7 @@ router.get("/user/:id", async function (req, res, next) {
     }
   }
 
+  console.log(columnStatus)
   let limit = "10"
   let offset = "0"
   if (req.query.limit) {
@@ -81,10 +82,12 @@ router.get("/user/:id", async function (req, res, next) {
 
   let data = await koneksi.query(
     `SELECT orders.id, id_user, tgl_order, no_faktur, status, nama_toko,foto_merchant, no_telp from orders inner join (SELECT id,id_order,id_barang from order_detail) T on T.id_order = orders.id inner join barang on barang.id = T.id_barang inner join merchant on merchant.id = barang.id_merchant inner join users on users.id_merchant = merchant.id
-     where ${columnStatus} (no_faktur ilike '%${cari}%' or nama_toko ilike '%${cari}%') and id_user=${id} and tgl_order between '${tglAwal}' and '${tglAkhir}' limit ${limit} offset ${offset}`,
+     where ${columnStatus} (no_faktur ilike '%${cari}%' or nama_toko ilike '%${cari}%') and id_user=${id} and tgl_order between '${tglAwal} 00:00:00' and '${tglAkhir} 23:59:59' limit ${limit} offset ${offset}`,
     [statusData]
   )
-  if (data.length == 1) {
+  console.log(`SELECT orders.id, id_user, tgl_order, no_faktur, status, nama_toko,foto_merchant, no_telp from orders inner join (SELECT id,id_order,id_barang from order_detail) T on T.id_order = orders.id inner join barang on barang.id = T.id_barang inner join merchant on merchant.id = barang.id_merchant inner join users on users.id_merchant = merchant.id
+  where ${columnStatus} (no_faktur ilike '%${cari}%' or nama_toko ilike '%${cari}%') and id_user=${id} and tgl_order between '${tglAwal} 00:00:00' and '${tglAkhir} 23:59:59' limit ${limit} offset ${offset}`)
+  if (data.length) {
     res.status(200).json({
       status: true,
       data: data,
