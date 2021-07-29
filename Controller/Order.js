@@ -426,34 +426,30 @@ router.put("/siapantar/:id", async function (req, res) {
     })
 })
 
-router.post("/biteship/:id", function (req, res) {
+router.post("/biteship", function (req, res) {
   let status_code = "1"
   let status = req.params.status
-  let id = req.params.id
-  if (status && id) {
-    if (status === "tunggu") {
-      status_code = "1"
-    } else if (status === "tolak") {
-      status_code = "2"
-    } else if (status === "antar") {
-      status_code = "5"
-    } else if (status === "sudahantar") {
-      status_code = "6"
-    } else if (status === "selesai") {
-      status_code = "7"
-    }
 
-    let sqlupdate = `UPDATE orders SET status='${status_code}' WHERE id=${id}`
-    console.log(sqlupdate)
-    db.none(sqlupdate)
-    res.status(200).json({
-      status: true,
-      data: {
-        id: id,
-        status: status,
-      },
-    })
-  }
+  // if (status && id) {
+  //   if (status === "tunggu") {
+  //     status_code = "1"
+  //   } else if (status === "tolak") {
+  //     status_code = "2"
+  //   } else if (status === "antar") {
+  //     status_code = "5"
+  //   } else if (status === "sudahantar") {
+  //     status_code = "6"
+  //   } else if (status === "selesai") {
+  //     status_code = "7"
+  //   }
+
+  //   let sqlupdate = `UPDATE orders SET status='${status_code}' WHERE id=${id}`
+  //   console.log(sqlupdate)
+  //   db.none(sqlupdate)
+  res.status(200).json({
+    status: true,
+  })
+  // }
 })
 
 //Ubah Status Order
