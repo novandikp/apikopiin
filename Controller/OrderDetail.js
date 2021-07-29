@@ -94,6 +94,16 @@ router.get("/:id", async function (req, res, next) {
   }
 })
 
+router.get("/orders/detail/:id", async function (req, res) {
+  let sqlorder = `SELECT order_detail.id, nama, jumlah, order_detail.harga, keterangan,foto_barang from order_detail inner join barang on barang.id = order_detail.id_barang where id_order = $1`
+  let order = await db.query(sqlorder, [req.params.id])
+
+  res.status(200).json({
+    status: true,
+    data: order,
+  })
+})
+
 router.get("/orders/:id", async function (req, res) {
   let sqlorder = `SELECT orders.status, orders.tgl_order, orders.no_faktur, orders.kurir, orders.no_resi, alamat.nama, nama_lengkap, alamat.no_telp, 
   alamat.detail,alamat.provinsi, alamat.kota, alamat.kecamatan , orders.metode_pembayaran from orders INNER join alamat on  orders.id_alamat
@@ -173,7 +183,7 @@ router.post("/", validate(), handlerInput, async function (req, res) {
       })
     }
   } catch (e) {
-    console.log('error tambah kernajang', e)
+    console.log("error tambah kernajang", e)
     res.status(500).json({
       status: true,
       data: req.body,
