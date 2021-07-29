@@ -388,6 +388,56 @@ router.put("/terima/:id", async function (req, res) {
     })
 })
 
+router.put("/tolak/:id", async function (req, res) {
+  let sqlorder =
+    "SELECT orders.id_user,orders.no_faktur, kurir,alamat.nama,alamat.latitude, alamat.longitude, alamat.detail, alamat.provinsi, alamat.kota,alamat.kecamatan,alamat.no_telp from orders inner join alamat on alamat.id =orders.id_alamat where orders.id=$1"
+  let sqldetail =
+    "SELECT barang.nama from order_detail inner join barang on order_detail.id_barang= barang.id  where id_order=$1"
+  let sqlmerchant =
+    "SELECT nama_toko,no_telp, merchant.alamat_toko,merchant.provinsi, merchant.kota,merchant.kecamatan,lat_toko,long_toko from order_detail inner join barang on order_detail.id_barang= barang.id inner join merchant on merchant.id = barang.id_merchant inner join users on users.id_merchant = merchant.id where id_order=$1"
+  let dataOrder = await koneksi.one(sqlorder, [req.params.id])
+  let dataDetail = await koneksi.query(sqldetail, [req.params.id])
+  let dataMerchant = await koneksi.one(sqlmerchant, [req.params.id])
+
+  try {
+    await koneksi.none("BEGIN")
+    await koneksi.none(`UPDATE orders set status = 2, alasan_tolak='${req.body.alasan}' where orders.id=$1`, [
+      req.params.id,
+    ])
+
+    await koneksi.none("COMMIT")
+    let deviceids = await koneksi.query(
+      `SELECT deviceid FROM user_log WHERE id_user=${dataOrder.id_user} and flaglogin=1`
+    )
+    // Jika ndak ada deviceid, skip biar ndak error
+    if (deviceids.length) {
+      sendNotification({
+        heading: "Pesanan Dibatalkan",
+        content: `Pesanan Anda ${dataOrder.no_faktur} ditolak oleh ${dataMerchant.nama_toko} karena ${req.body.alasan}. Silakan pilih obat yang lain.`,
+        player_ids: deviceids.map((item) => item.deviceid),
+        additionalData: {
+          params: {
+            idorder: req.params.id,
+          },
+          tujuan: "DetailTransaksi",
+        },
+      })
+
+      res.status(200).json({
+        status: true,
+        msg: "Pesanan berhasil ditolak",
+      })
+    }
+  } catch (e) {
+    await koneksi.none("ROLLBACK")
+    console.log("error tolak order", e)
+    res.status(500).json({
+      status: false,
+      errorMessage: "Data gagal dimasukkan",
+    })
+  }
+})
+
 router.put("/siapantar/:id", async function (req, res) {
   let sqlorder =
     "SELECT orders.no_faktur, id_order_biteship from orders where orders.id=$1"

@@ -21,7 +21,7 @@ router.get("/user/:id", async function (req, res) {
     )
 
     let data = await koneksi.query(
-      `SELECT order_detail.id,nama_toko, foto_barang, id_order, order_detail.id_barang, id_varian, order_detail.harga, jumlah, keterangan,
+      `SELECT order_detail.id, merchant.id as id_merchant, nama_toko, foto_barang, id_order, order_detail.id_barang, id_varian, order_detail.harga, jumlah, keterangan,
             orders.id_user, barang.nama, deskripsi, berat, stok, COALESCE(varian.nama_varian,'-')  as varian
       FROM order_detail
       inner join barang on order_detail.id_barang = barang.id
@@ -41,8 +41,8 @@ router.get("/user/:id", async function (req, res) {
         item["orderdetail"] = data[item.id]
         item["nama_toko"] = data[item.id][0]["nama_toko"]
         let dataKurir = await koneksi.query(
-          `SELECT kodekurir FROM kurirtoko where id_merchant=$1`,
-          [item.id]
+          `SELECT kodekurir as ong_kode FROM kurirtoko where id_merchant=$1`,
+          [item.orderdetail[0].id_merchant]
         )
         item["kurir"] = dataKurir
         keranjang.push(item)
