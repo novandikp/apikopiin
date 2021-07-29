@@ -685,8 +685,8 @@ router.post("/biteship", async function (req, res) {
   try {
     let heading, content
     let dataOrder =
-      await koneksi.one(`SELECT id,no_faktur,u.id as id_user FROM orders o where id_order_biteship='${order_id}'
-                    INNER JOIN users u on u.id=o.id_user`)
+      await koneksi.one(`SELECT o.id,no_faktur,u.id as id_user FROM orders o 
+                    INNER JOIN users u on u.id=o.id_user where id_order_biteship='${order_id}'`)
     if (status == "dropping_off") {
       await koneksi.none(
         "update orders set status = 5 where id_order_biteship = '" +
@@ -697,7 +697,7 @@ router.post("/biteship", async function (req, res) {
       content = `Pesanan Anda ${dataOrder.no_faktur} sedang diantar ke alamat tujuan..`
     } else if (status == "delivered") {
       await koneksi.none(
-        "update orders set status = 7  where id_order_biteship = '" +
+        "update orders set status = 6  where id_order_biteship = '" +
           order_id +
           "'"
       )
@@ -716,7 +716,7 @@ router.post("/biteship", async function (req, res) {
         player_ids: deviceids.map((item) => item.deviceid),
         additionalData: {
           params: {
-            idorder: req.params.id,
+            idorder: dataOrder.id,
           },
           tujuan: "DetailTransaksi",
         },
