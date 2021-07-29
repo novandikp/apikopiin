@@ -478,8 +478,8 @@ router.put("/batalkan/:id", async function (req, res) {
           },
           tujuan: "DetailTransaksi",
         },
-      }).catch(e => {
-        console.log('eror send notif merchant',e)
+      }).catch((e) => {
+        console.log("eror send notif merchant", e)
       })
     }
 
@@ -495,8 +495,8 @@ router.put("/batalkan/:id", async function (req, res) {
           },
           tujuan: "DetailTransaksi",
         },
-      }).catch(e => {
-        console.log('eror send notif user',e)
+      }).catch((e) => {
+        console.log("eror send notif user", e)
       })
     }
     res.status(200).json({
@@ -640,7 +640,9 @@ router.put("/siapantar/:id", async function (req, res) {
         msg: "Data berhasil dimasukkan",
       })
     })
+
     .catch((e) => {
+      console.log(e.response)
       res.status(500).json({
         status: false,
         errorMessage: "Dara gagal dimasukkan",
