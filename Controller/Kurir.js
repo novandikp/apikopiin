@@ -32,7 +32,7 @@ router.get("/shop/:id", async function (req, res) {
 })
 
 router.post("/", async function (req, res) {
-  if (req.body.kodekurir?.length > 0) {
+  if ((req.body.kodekurir ? req.body.kodekurir.length : [].length) > 0) {
     try {
       let sql = "delete from kurirtoko where id_merchant = $1"
       await db.none(sql, [req.body.id_merchant])
