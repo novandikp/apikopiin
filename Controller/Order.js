@@ -354,23 +354,23 @@ router.put("/terima/:id", async function (req, res) {
           console.log(e)
         })
 
-        let deviceids = await koneksi.query(
-          `SELECT deviceid FROM user_log WHERE id_user=${dataOrder.id_user} and flaglogin=1`
-        )
-        // Jika ndak ada deviceid, skip biar ndak error
-        if (deviceids.length){
-          sendNotification({
-            heading: "Pesanan Sedang Diproses",
-            content: `Pesanan Anda ${dataOrder.no_faktur} diterima oleh ${dataMerchant.nama_toko}.`,
-            player_ids: deviceids.map((item) => item.deviceid),
-            additionalData: {
-              params: {
-                idorder: req.params.id,
-              },
-              tujuan: "DetailTransaksi",
-            }
-          })
-        }
+      let deviceids = await koneksi.query(
+        `SELECT deviceid FROM user_log WHERE id_user=${dataOrder.id_user} and flaglogin=1`
+      )
+      // Jika ndak ada deviceid, skip biar ndak error
+      if (deviceids.length) {
+        sendNotification({
+          heading: "Pesanan Sedang Diproses",
+          content: `Pesanan Anda ${dataOrder.no_faktur} diterima oleh ${dataMerchant.nama_toko}.`,
+          player_ids: deviceids.map((item) => item.deviceid),
+          additionalData: {
+            params: {
+              idorder: req.params.id,
+            },
+            tujuan: "DetailTransaksi",
+          },
+        })
+      }
       res.status(200).json({
         status: true,
         msg: "Dara berhasil dimasukkan",
@@ -424,6 +424,36 @@ router.put("/siapantar/:id", async function (req, res) {
         errorMessage: "Dara gagal dimasukkan",
       })
     })
+})
+
+router.post("/biteship/:id", function (req, res) {
+  let status_code = "1"
+  let status = req.params.status
+  let id = req.params.id
+  if (status && id) {
+    if (status === "tunggu") {
+      status_code = "1"
+    } else if (status === "tolak") {
+      status_code = "2"
+    } else if (status === "antar") {
+      status_code = "5"
+    } else if (status === "sudahantar") {
+      status_code = "6"
+    } else if (status === "selesai") {
+      status_code = "7"
+    }
+
+    let sqlupdate = `UPDATE orders SET status='${status_code}' WHERE id=${id}`
+    console.log(sqlupdate)
+    db.none(sqlupdate)
+    res.status(200).json({
+      status: true,
+      data: {
+        id: id,
+        status: status,
+      },
+    })
+  }
 })
 
 //Ubah Status Order
@@ -566,7 +596,7 @@ router.post("/ewallet-webhook", async (req, res, next) => {
             idorder: itemOrder.idorder,
           },
           tujuan: "DetailTransaksi",
-        }
+        },
       })
     }
 
