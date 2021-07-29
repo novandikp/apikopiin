@@ -794,7 +794,7 @@ router.put("/selesai/:id", async function (req, res) {
     }
     // total += dataOrder.ongkir (Ongkir ditanggung E-kopee)
     await koneksi.none(
-      `INSERT INTO public.jurnal_detail (id_jurnal, uid, userver, debit, kredit) VALUES(${id}, ${dataOrder.id_user}, 1, ${total}, 0);`
+      `INSERT INTO public.jurnal_detail (id_jurnal, uid, userver, debit, kredit) VALUES(${id}, ${dataMerchant.id}, 2, ${total}, 0);`
     )
 
     await koneksi.none("COMMIT")
