@@ -63,25 +63,32 @@ router.post("/login", async function (req, res, next) {
     if (result.length > 0) {
       let id_user = result[0].id
       let id_merchant = result[0].id_merchant
-      let dataLog = await koneksi.query(
+      let dataLogUser = await koneksi.query(
         `SELECT * FROM user_log WHERE id_user=${id_user} and deviceid='${req.body.deviceid}'`
       )
+      let dataLogMerchant = await koneksi.query(
+        `SELECT * FROM merchant_log WHERE id_merchant=${id_merchant} and deviceid='${req.body.deviceid}'`
+      )
       // console.log(dataLog)
-      if (!dataLog.length) {
+      if (!dataLogUser.length) {
         // Insert log baru
         await koneksi.none(
           "INSERT INTO user_log(id_user,deviceid,tgllogin) VALUES($1,$2,NOW())",
           [id_user, req.body.deviceid]
-        )
-        await koneksi.none(
-          "INSERT INTO merchant_log(id_merchant,deviceid,tgllogin) VALUES($1,$2,NOW())",
-          [id_merchant, req.body.deviceid]
         )
       } else {
         // Update log
         await koneksi.none(
           `UPDATE user_log SET flaglogin=1, tgllogin=NOW() WHERE id_user=${id_user}`
         )
+      }
+      // Log merchang
+      if (!dataLogMerchant.length) {
+        await koneksi.none(
+          "INSERT INTO merchant_log(id_merchant,deviceid,tgllogin) VALUES($1,$2,NOW())",
+          [id_merchant, req.body.deviceid]
+        )
+      } else {
         await koneksi.none(
           `UPDATE merchant_log SET flaglogin=1, tgllogin=NOW() WHERE id_merchant=${id_merchant}`
         )
@@ -114,6 +121,7 @@ router.post("/login", async function (req, res, next) {
 // Logout
 router.post("/logout", async function (req, res, next) {
   const { id_user, id_merchant, deviceid } = req.body
+  console.log({ id_user, id_merchant, deviceid })
   try {
     await koneksi.none(
       `UPDATE user_log SET flaglogin=0 WHERE id_user=${id_user} AND deviceid='${deviceid}'`
