@@ -231,7 +231,7 @@ router.put("/generate", async function (req, res) {
               select
                   case
                       when faktur is null then '0001'
-                      else substring(faktur, 10, 3) || (substring(faktur, 13, 1)::int + 1)
+                      else lpad((substring(faktur, 9,4)::int+1)::varchar, 4, '0')
                   end
               from
                   (
@@ -436,7 +436,7 @@ router.put("/batalkan/:id", async function (req, res) {
             select
                 case
                     when faktur is null then '0001'
-                    else substring(faktur, 10, 3) || (substring(faktur, 13, 1) :: int + 1)
+                    else lpad((substring(faktur, 9,4)::int+1)::varchar, 4, '0')
                 end
             from
                 (
@@ -553,7 +553,7 @@ router.put("/tolak/:id", async function (req, res) {
             select
                 case
                     when faktur is null then '0001'
-                    else substring(faktur, 10, 3) || (substring(faktur, 13, 1) :: int + 1)
+                    else lpad((substring(faktur, 9,4)::int+1)::varchar, 4, '0')
                 end
             from
                 (
@@ -771,7 +771,7 @@ router.put("/selesai/:id", async function (req, res) {
             select
                 case
                     when faktur is null then '0001'
-                    else substring(faktur, 10, 3) || (substring(faktur, 13, 1) :: int + 1)
+                    else lpad((substring(faktur, 9,4)::int+1)::varchar, 4, '0')
                 end
             from
                 (
@@ -928,7 +928,7 @@ router.post("/ewallet-webhook", async (req, res, next) => {
             select
                 case
                     when faktur is null then '0001'
-                    else substring(faktur, 10, 3) || (substring(faktur, 13, 1) :: int + 1)
+                    else lpad((substring(faktur, 9,4)::int+1)::varchar, 4, '0')
                 end
             from
                 (
