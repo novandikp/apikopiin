@@ -1,3 +1,3 @@
 # apikopiin
 API Kopiin
-Merupakan Backend dari Project Kopiin Untuk Gemastik 2021
+API dari Aplikasi Kopiin. Aplikasi Kopiin merupakan Aplikasi e-commerce untuk Gemastik 2021
